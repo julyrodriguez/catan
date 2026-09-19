@@ -5,7 +5,7 @@ import {
   Users, PlusCircle, Trophy, BookOpen, 
   Play, Shield, Clock, Compass, LogIn, LogOut,
   Sparkles, Layers, Crown, ArrowRight, CheckCircle2,
-  MapPin, Flame
+  MapPin, Flame, Trash2
 } from 'lucide-react';
 
 export default function LobbyBrowser({ user, onOpenAuth, onLogout, onJoinRoom }) {
@@ -74,6 +74,27 @@ export default function LobbyBrowser({ user, onOpenAuth, onLogout, onJoinRoom })
       alert(err.message);
     } finally {
       setCreating(false);
+    }
+  };
+
+  const handleDeleteRoom = async (e, roomCode) => {
+    e.stopPropagation();
+    if (!window.confirm(`¿Deseas eliminar la sala ${roomCode}?`)) return;
+    try {
+      await api.deleteRoom(roomCode);
+      fetchRooms();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const handleCleanupRooms = async () => {
+    if (!window.confirm('¿Deseas limpiar todas las salas inactivas?')) return;
+    try {
+      const res = await api.cleanupRooms();
+      fetchRooms();
+    } catch (err) {
+      alert(err.message);
     }
   };
 
@@ -203,6 +224,17 @@ export default function LobbyBrowser({ user, onOpenAuth, onLogout, onJoinRoom })
               </button>
             </div>
 
+            {rooms.length > 0 && (
+              <button
+                onClick={handleCleanupRooms}
+                title="Limpiar todas las salas"
+                className="p-2.5 rounded-xl bg-red-950/40 hover:bg-red-900/60 border border-red-500/30 text-red-300 transition flex items-center gap-1.5 text-xs font-bold"
+              >
+                <Trash2 size={16} />
+                <span className="hidden sm:inline">Limpiar</span>
+              </button>
+            )}
+
             <button
               onClick={() => {
                 if (!user) onOpenAuth();
@@ -257,9 +289,18 @@ export default function LobbyBrowser({ user, onOpenAuth, onLogout, onJoinRoom })
                           <Crown size={12} className="text-amber-400" /> Anfitrión: <strong>{room.host}</strong>
                         </span>
                       </div>
-                      <span className="font-mono text-xs font-black px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700 text-amber-400 shadow-inner">
-                        {room.roomCode}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-mono text-xs font-black px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700 text-amber-400 shadow-inner">
+                          {room.roomCode}
+                        </span>
+                        <button
+                          onClick={(e) => handleDeleteRoom(e, room.roomCode)}
+                          title="Eliminar sala"
+                          className="p-1.5 rounded-lg bg-slate-900/80 hover:bg-red-950 text-slate-500 hover:text-red-400 border border-slate-800 hover:border-red-500/40 transition"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
                     </div>
 
                     <div className="space-y-2.5 my-4 text-xs text-slate-300">

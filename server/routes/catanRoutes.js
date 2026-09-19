@@ -246,6 +246,29 @@ router.get('/rooms/:code', (req, res) => {
   res.json(game.getPublicState());
 });
 
+// 7b. SALAS: ELIMINAR SALA ESPECÍFICA
+router.delete('/rooms/:code', (req, res) => {
+  try {
+    const deleted = catanService.deleteRoom(req.params.code);
+    if (!deleted) {
+      return res.status(404).json({ error: 'Sala no encontrada o ya eliminada.' });
+    }
+    res.json({ success: true, message: 'Sala eliminada con éxito.' });
+  } catch (error) {
+    res.status(500).json({ error: 'Error al eliminar sala.' });
+  }
+});
+
+// 7c. SALAS: LIMPIAR TODAS LAS SALAS
+router.post('/rooms/cleanup', (req, res) => {
+  try {
+    const count = catanService.clearAllRooms();
+    res.json({ success: true, count, message: `Se limpiaron ${count} salas.` });
+  } catch (error) {
+    res.status(500).json({ error: 'Error al limpiar salas.' });
+  }
+});
+
 // 8. CLASIFICACIÓN (LEADERBOARD)
 router.get('/leaderboard', async (req, res) => {
   try {

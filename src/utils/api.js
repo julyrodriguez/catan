@@ -135,6 +135,14 @@ export const api = {
 
   getHistory: async () => {
     return await apiRequest('/history');
+  },
+
+  deleteRoom: async (code) => {
+    return await apiRequest(`/rooms/${code}`, 'DELETE');
+  },
+
+  cleanupRooms: async () => {
+    return await apiRequest('/rooms/cleanup', 'POST');
   }
 };
 

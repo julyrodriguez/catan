@@ -53,6 +53,28 @@ class CatanService {
     return list;
   }
 
+  deleteRoom(roomCode) {
+    if (!roomCode) return false;
+    const upper = roomCode.toUpperCase();
+    const game = this.rooms.get(upper);
+    if (!game) return false;
+
+    for (const p of game.players) {
+      if (this.playerRoomMap.get(p.id) === upper) {
+        this.playerRoomMap.delete(p.id);
+      }
+    }
+    this.rooms.delete(upper);
+    return true;
+  }
+
+  clearAllRooms() {
+    const count = this.rooms.size;
+    this.rooms.clear();
+    this.playerRoomMap.clear();
+    return count;
+  }
+
   joinRoom(roomCode, user) {
     const game = this.getRoom(roomCode);
     if (!game) throw new Error('Sala no encontrada.');
