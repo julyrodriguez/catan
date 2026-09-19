@@ -1,0 +1,251 @@
+// src/App.jsx
+import React, { useState, useEffect } from 'react';
+import { authStorage, socketClient, api } from './utils/api';
+
+import AuthModal from './components/AuthModal';
+import LobbyBrowser from './components/LobbyBrowser';
+import GameRoomLobby from './components/GameRoomLobby';
+import CatanBoard from './components/CatanBoard';
+import PlayerHUD from './components/PlayerHUD';
+import TradeModal from './components/TradeModal';
+import RobberModal from './components/RobberModal';
+import DevCardModal from './components/DevCardModal';
+import SidebarPlayers from './components/SidebarPlayers';
+import ChatAndLogs from './components/ChatAndLogs';
+import VictoryModal from './components/VictoryModal';
+
+export default function App() {
+  const [currentUser, setCurrentUser] = useState(() => authStorage.getUser());
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [currentRoomCode, setCurrentRoomCode] = useState(null);
+
+  // Estado completo del juego recibido por WebSocket
+  const [gameState, setGameState] = useState(null);
+  const [myPrivateState, setMyPrivateState] = useState(null);
+
+  // Modos de construcción interactiva en tablero ('road' | 'settlement' | 'city' | null)
+  const [buildMode, setBuildMode] = useState(null);
+
+  // Modales interactivos
+  const [showTradeModal, setShowTradeModal] = useState(false);
+  const [showDevCardModal, setShowDevCardModal] = useState(false);
+  const [actionError, setActionError] = useState(null);
+
+  // Verificar sesión existente al cargar
+  useEffect(() => {
+    const token = authStorage.getToken();
+    if (token) {
+      api.getMe()
+        .then(u => {
+          setCurrentUser(u);
+          authStorage.setUser(u);
+        })
+        .catch(() => {
+          authStorage.clearToken();
+        });
+    }
+  }, []);
+
+  // Suscripción al WebSocket de Catán
+  useEffect(() => {
+    const unsubUpdate = socketClient.on('state_update', (payload) => {
+      setGameState(payload);
+      if (payload.me) {
+        setMyPrivateState(payload.me);
+      }
+    });
+
+    const unsubError = socketClient.on('action_error', (err) => {
+      setActionError(err);
+      setTimeout(() => setActionError(null), 4000);
+    });
+
+    return () => {
+      unsubUpdate();
+      unsubError();
+    };
+  }, []);
+
+  // Unirse a una sala
+  const handleJoinRoom = (roomCode) => {
+    setCurrentRoomCode(roomCode);
+    socketClient.connect(() => {
+      socketClient.joinRoom(roomCode, currentUser);
+    });
+  };
+
+  const handleLeaveRoom = () => {
+    socketClient.disconnect();
+    setCurrentRoomCode(null);
+    setGameState(null);
+    setMyPrivateState(null);
+    setBuildMode(null);
+  };
+
+  const handleLogout = () => {
+    authStorage.clearToken();
+    authStorage.clearUser();
+    setCurrentUser(null);
+  };
+
+  // --- INTERACCIONES DEL TABLERO ---
+  const handleSelectVertex = (vId) => {
+    if (!gameState) return;
+
+    if (gameState.phase === 'setup_round_1' || gameState.phase === 'setup_round_2') {
+      socketClient.send('build_initial_settlement', { vertexId: vId });
+      return;
+    }
+
+    if (buildMode === 'settlement') {
+      socketClient.send('build_settlement', { vertexId: vId });
+      setBuildMode(null);
+    } else if (buildMode === 'city') {
+      socketClient.send('build_city', { vertexId: vId });
+      setBuildMode(null);
+    }
+  };
+
+  const handleSelectEdge = (eId) => {
+    if (!gameState) return;
+
+    if (gameState.phase === 'setup_round_1' || gameState.phase === 'setup_round_2') {
+      socketClient.send('build_initial_road', { edgeId: eId });
+      return;
+    }
+
+    if (buildMode === 'road') {
+      socketClient.send('build_road', { edgeId: eId });
+      setBuildMode(null);
+    }
+  };
+
+  const handleSelectHex = (hexId) => {
+    if (gameState?.subphase === 'robber') {
+      socketClient.send('move_robber', { hexId });
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-950 flex flex-col justify-between">
+      {/* Alerta flotante de errores de acción */}
+      {actionError && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-red-600/90 text-white font-semibold text-xs py-2 px-5 rounded-full shadow-2xl backdrop-blur border border-red-400 animate-bounce">
+          ⚠️ {actionError}
+        </div>
+      )}
+
+      {/* 1. Vista de Explorador de Salas (Fuera de partida) */}
+      {!currentRoomCode && (
+        <LobbyBrowser
+          user={currentUser}
+          onOpenAuth={() => setShowAuthModal(true)}
+          onLogout={handleLogout}
+          onJoinRoom={handleJoinRoom}
+        />
+      )}
+
+      {/* 2. Vista de Sala de Espera Pre-Juego */}
+      {currentRoomCode && gameState && gameState.state === 'lobby' && (
+        <GameRoomLobby
+          gameState={gameState}
+          currentUser={currentUser}
+          onLeaveRoom={handleLeaveRoom}
+        />
+      )}
+
+      {/* 3. Vista Principal del Tablero en Juego */}
+      {currentRoomCode && gameState && gameState.state !== 'lobby' && (
+        <div className="flex-1 flex flex-col h-screen overflow-hidden p-2 sm:p-3">
+          {/* Barra Superior con HUD de Juego */}
+          <PlayerHUD
+            gameState={gameState}
+            myPrivateState={myPrivateState}
+            currentUser={currentUser}
+            buildMode={buildMode}
+            setBuildMode={setBuildMode}
+            onRollDice={() => socketClient.send('roll_dice')}
+            onBuyDevCard={() => socketClient.send('buy_dev_card')}
+            onEndTurn={() => socketClient.send('end_turn')}
+            onSkipSpecialBuild={() => socketClient.send('skip_special_build')}
+            onOpenTradeModal={() => setShowTradeModal(true)}
+            onOpenDevCardModal={() => setShowDevCardModal(true)}
+          />
+
+          {/* Área Central: Sidebar Izquierdo + Tablero SVG + Sidebar Derecho */}
+          <div className="flex-1 flex items-center justify-between gap-3 my-2 overflow-hidden relative">
+            {/* Sidebar Jugadores */}
+            <div className="hidden md:block shrink-0 h-full overflow-y-auto">
+              <SidebarPlayers
+                gameState={gameState}
+                myPrivateState={myPrivateState}
+                currentUser={currentUser}
+              />
+            </div>
+
+            {/* Tablero Hexagonal */}
+            <div className="flex-1 h-full flex items-center justify-center relative">
+              <CatanBoard
+                board={gameState.board}
+                activePlayerId={gameState.activePlayerId}
+                currentUserId={currentUser?.id}
+                phase={gameState.phase}
+                subphase={gameState.subphase}
+                buildMode={buildMode}
+                onSelectVertex={handleSelectVertex}
+                onSelectEdge={handleSelectEdge}
+                onSelectHex={handleSelectHex}
+              />
+            </div>
+
+            {/* Sidebar Chat e Historial */}
+            <div className="hidden lg:block shrink-0 h-full">
+              <ChatAndLogs
+                logs={gameState.logs}
+                currentUser={currentUser}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modales y Diálogos */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onAuthSuccess={(u) => setCurrentUser(u)}
+      />
+
+      {gameState && (
+        <>
+          <TradeModal
+            isOpen={showTradeModal || Boolean(gameState.activeTrade)}
+            onClose={() => setShowTradeModal(false)}
+            gameState={gameState}
+            myPrivateState={myPrivateState}
+            currentUser={currentUser}
+          />
+
+          <RobberModal
+            gameState={gameState}
+            myPrivateState={myPrivateState}
+            currentUser={currentUser}
+          />
+
+          <DevCardModal
+            isOpen={showDevCardModal}
+            onClose={() => setShowDevCardModal(false)}
+            gameState={gameState}
+            myPrivateState={myPrivateState}
+            currentUser={currentUser}
+          />
+
+          <VictoryModal
+            winner={gameState.winner}
+            onReturnToLobby={handleLeaveRoom}
+          />
+        </>
+      )}
+    </div>
+  );
+}
