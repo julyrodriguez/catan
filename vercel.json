@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/catan/:path*",
+      "destination": "https://apivacas.jariel.com.ar/api/catan/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

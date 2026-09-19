@@ -1,7 +1,51 @@
 // src/utils/api.js
 // Cliente de API REST y WebSocket para Catan Online
 
-const API_BASE = '/api/catan';
+export function getServerEndpoints() {
+  if (typeof window === 'undefined') {
+    return {
+      apiBase: 'https://apivacas.jariel.com.ar/api/catan',
+      wsUrl: 'wss://apivacas.jariel.com.ar/api/catan/ws'
+    };
+  }
+
+  // 1. Si hay variable de entorno explícita de Vite
+  if (import.meta.env.VITE_API_URL) {
+    const base = import.meta.env.VITE_API_URL.replace(/\/+$/, '');
+    const ws = base.replace(/^http/, 'ws') + '/ws';
+    return { apiBase: base, wsUrl: ws };
+  }
+
+  const hostname = window.location.hostname;
+  const isLocal = hostname === 'localhost' || 
+                  hostname === '127.0.0.1' || 
+                  hostname.startsWith('192.168.') || 
+                  hostname.startsWith('100.');
+
+  // Si está desplegado en Vercel, en catan.jariel.com.ar o en cualquier dominio de producción
+  if (!isLocal || hostname.endsWith('jariel.com.ar') || hostname.includes('vercel.app')) {
+    return {
+      apiBase: 'https://apivacas.jariel.com.ar/api/catan',
+      wsUrl: 'wss://apivacas.jariel.com.ar/api/catan/ws'
+    };
+  }
+
+  // Si estamos en entorno de desarrollo local (ej. Vite en 5173 o 5174)
+  const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+  const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  if (window.location.port === '5173' || window.location.port === '5174') {
+    return {
+      apiBase: `${protocol}//${hostname}:3000/api/catan`,
+      wsUrl: `${wsProtocol}//${hostname}:3000/api/catan/ws`
+    };
+  }
+
+  // Si estamos sirviendo directamente desde el servidor local (ej. Express en puerto 3000)
+  return {
+    apiBase: '/api/catan',
+    wsUrl: `${wsProtocol}//${window.location.host}/api/catan/ws`
+  };
+}
 
 export const authStorage = {
   getToken: () => localStorage.getItem('catan_token'),
@@ -20,17 +64,30 @@ export const authStorage = {
 };
 
 export async function apiRequest(endpoint, method = 'GET', body = null) {
+  const { apiBase } = getServerEndpoints();
   const headers = { 'Content-Type': 'application/json' };
   const token = authStorage.getToken();
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  const res = await fetch(`${API_BASE}${endpoint}`, {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : null
-  });
+  let res;
+  try {
+    res = await fetch(`${apiBase}${endpoint}`, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : null
+    });
+  } catch (netErr) {
+    throw new Error(`Error de conexión con el servidor (${netErr.message})`);
+  }
 
-  const data = await res.json();
+  const text = await res.text();
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch (parseErr) {
+    throw new Error(res.ok ? 'Respuesta no válida del servidor' : `Error del servidor (${res.status}): ${text.slice(0, 80)}`);
+  }
+
   if (!res.ok) {
     throw new Error(data.error || 'Error en la petición al servidor');
   }
@@ -95,11 +152,7 @@ export class CatanSocketClient {
       return;
     }
 
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    // Si estamos en dev (puerto 5174), conectamos al backend en puerto 3000
-    const host = window.location.port === '5174' ? `${window.location.hostname}:3000` : window.location.host;
-    const wsUrl = `${protocol}//${host}/api/catan/ws`;
-
+    const { wsUrl } = getServerEndpoints();
     this.ws = new WebSocket(wsUrl);
 
     this.ws.onopen = () => {
