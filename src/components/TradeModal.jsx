@@ -38,6 +38,7 @@ export default function TradeModal({
   // Determinar mejor ratio para banca/puerto
   const getBestRatio = (resource) => {
     let ratio = 4;
+    if (!gameState?.board?.vertices) return ratio;
     for (const v of Object.values(gameState.board.vertices)) {
       if (v.building && v.building.playerId === currentUser?.id && v.port) {
         if (v.port.type === '2:1' && v.port.resource === resource) return 2;
