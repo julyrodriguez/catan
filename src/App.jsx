@@ -6,7 +6,8 @@ import AuthModal from './components/AuthModal';
 import LobbyBrowser from './components/LobbyBrowser';
 import GameRoomLobby from './components/GameRoomLobby';
 import CatanBoard from './components/CatanBoard';
-import PlayerHUD from './components/PlayerHUD';
+import GameHeader from './components/GameHeader';
+import PlayerDeck from './components/PlayerDeck';
 import TradeModal from './components/TradeModal';
 import RobberModal from './components/RobberModal';
 import DevCardModal from './components/DevCardModal';
@@ -156,24 +157,16 @@ export default function App() {
 
       {/* 3. Vista Principal del Tablero en Juego */}
       {currentRoomCode && gameState && gameState.state !== 'lobby' && (
-        <div className="flex-1 flex flex-col h-screen overflow-hidden p-2 sm:p-3">
-          {/* Barra Superior con HUD de Juego */}
-          <PlayerHUD
+        <div className="flex-1 flex flex-col h-screen overflow-hidden p-1 sm:p-2.5 justify-between">
+          {/* Header Superior: Turno, Dados, Código de Sala y Utilidades */}
+          <GameHeader
             gameState={gameState}
-            myPrivateState={myPrivateState}
             currentUser={currentUser}
-            buildMode={buildMode}
-            setBuildMode={setBuildMode}
-            onRollDice={() => socketClient.send('roll_dice')}
-            onBuyDevCard={() => socketClient.send('buy_dev_card')}
-            onEndTurn={() => socketClient.send('end_turn')}
-            onSkipSpecialBuild={() => socketClient.send('skip_special_build')}
-            onOpenTradeModal={() => setShowTradeModal(true)}
-            onOpenDevCardModal={() => setShowDevCardModal(true)}
+            onLeaveRoom={handleLeaveRoom}
           />
 
           {/* Área Central: Sidebar Izquierdo + Tablero SVG + Sidebar Derecho */}
-          <div className="flex-1 flex items-center justify-between gap-3 my-2 overflow-hidden relative">
+          <div className="min-h-0 flex-1 flex items-center justify-between gap-2 sm:gap-3 my-1 overflow-hidden relative">
             {/* Sidebar Jugadores */}
             <div className="hidden md:block shrink-0 h-full overflow-y-auto">
               <SidebarPlayers
@@ -206,6 +199,21 @@ export default function App() {
               />
             </div>
           </div>
+
+          {/* Deck Inferior: Mano de Recursos (Madera, Arcilla, Lana, Trigo, Mineral) + Acciones de Construcción */}
+          <PlayerDeck
+            gameState={gameState}
+            myPrivateState={myPrivateState}
+            currentUser={currentUser}
+            buildMode={buildMode}
+            setBuildMode={setBuildMode}
+            onRollDice={() => socketClient.send('roll_dice')}
+            onBuyDevCard={() => socketClient.send('buy_dev_card')}
+            onEndTurn={() => socketClient.send('end_turn')}
+            onSkipSpecialBuild={() => socketClient.send('skip_special_build')}
+            onOpenTradeModal={() => setShowTradeModal(true)}
+            onOpenDevCardModal={() => setShowDevCardModal(true)}
+          />
         </div>
       )}
 

@@ -1,6 +1,7 @@
 // src/components/SidebarPlayers.jsx
 import React from 'react';
-import { Trophy, Sword, Compass, Layers, Sparkles, Home, Castle } from 'lucide-react';
+import { Trophy, Sword, Compass, Layers, Sparkles, Home, Castle, GitCommitHorizontal } from 'lucide-react';
+import PlayerAvatar from './PlayerAvatar';
 
 export default function SidebarPlayers({
   gameState,
@@ -46,15 +47,12 @@ export default function SidebarPlayers({
               <div className="pl-1.5 space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
-                    <div
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shadow border"
-                      style={{
-                        borderColor: player.color,
-                        backgroundColor: '#0a0f1d'
-                      }}
-                    >
-                      {player.avatar || '🧑‍🌾'}
-                    </div>
+                    <PlayerAvatar
+                      isBot={player.isBot}
+                      isHost={player.isHost}
+                      color={player.color}
+                      size={32}
+                    />
 
                     <div>
                       <div className="font-bold text-xs text-white flex items-center gap-1.5 leading-tight">
@@ -64,7 +62,11 @@ export default function SidebarPlayers({
                             Tú
                           </span>
                         )}
-                        {player.isBot && <span className="text-[10px] text-slate-400">🤖</span>}
+                        {player.isBot && (
+                          <span className="text-[9px] bg-cyan-950/60 text-cyan-300 px-1 rounded border border-cyan-800/40 font-bold">
+                            BOT
+                          </span>
+                        )}
                       </div>
 
                       <div className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-2">
@@ -76,8 +78,8 @@ export default function SidebarPlayers({
                           <Castle size={10} className="text-slate-400" /> {player.citiesCount}
                         </span>
                         <span>•</span>
-                        <span title="Carreteras construidas">
-                          🛣️ {player.roadsCount}
+                        <span className="flex items-center gap-0.5" title="Carreteras construidas">
+                          <GitCommitHorizontal size={11} className="text-slate-400" /> {player.roadsCount}
                         </span>
                       </div>
                     </div>
