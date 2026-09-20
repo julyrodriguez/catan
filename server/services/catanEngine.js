@@ -524,6 +524,8 @@ class CatanGameInstance {
     const sum = d1 + d2;
     this.dice = [d1, d2];
     this.lastRoll = sum;
+    this.rollCount = (this.rollCount || 0) + 1;
+    this.lastRoller = { id: player.id, username: player.username, avatar: player.avatar, color: player.color };
 
     this.log(`🎲 ${player.username} tiró los dados: ${d1} + ${d2} = ${sum}`);
 
@@ -1379,6 +1381,8 @@ class CatanGameInstance {
       activePlayerId: this.getCurrentPlayer()?.id,
       dice: this.dice,
       lastRoll: this.lastRoll,
+      rollCount: this.rollCount || 0,
+      lastRoller: this.lastRoller || null,
       winner: this.winner,
       longestRoadHolder: this.longestRoadHolder,
       largestArmyHolder: this.largestArmyHolder,

@@ -14,6 +14,7 @@ import DevCardModal from './components/DevCardModal';
 import SidebarPlayers from './components/SidebarPlayers';
 import ChatAndLogs from './components/ChatAndLogs';
 import VictoryModal from './components/VictoryModal';
+import DiceRollOverlay from './components/DiceRollOverlay';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState(() => authStorage.getUser());
@@ -252,6 +253,9 @@ export default function App() {
             winner={gameState.winner}
             onReturnToLobby={handleLeaveRoom}
           />
+
+          {/* Animación 3D de Tirada de Dados en el Centro de la Pantalla */}
+          <DiceRollOverlay gameState={gameState} />
         </>
       )}
     </div>

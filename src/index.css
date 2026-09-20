@@ -415,3 +415,39 @@ h1, h2, h3, .font-cinzel {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(245, 158, 11, 0.5);
 }
+
+/* Animaciones 3D de Tirada de Dados */
+.animate-dice-tumble-1 {
+  animation: dice-tumble-1 0.7s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+.animate-dice-tumble-2 {
+  animation: dice-tumble-2 0.7s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+@keyframes dice-tumble-1 {
+  0% { transform: translateY(-40px) rotate(-22deg) scale(0.85); }
+  20% { transform: translateY(-15px) rotate(16deg) scale(1.12); }
+  40% { transform: translateY(10px) rotate(-12deg) scale(0.94); }
+  60% { transform: translateY(-6px) rotate(8deg) scale(1.04); }
+  80% { transform: translateY(2px) rotate(-4deg) scale(0.98); }
+  100% { transform: translateY(0) rotate(-2deg) scale(1); }
+}
+
+@keyframes dice-tumble-2 {
+  0% { transform: translateY(-44px) rotate(24deg) scale(0.85); }
+  20% { transform: translateY(-16px) rotate(-18deg) scale(1.14); }
+  40% { transform: translateY(11px) rotate(13deg) scale(0.93); }
+  60% { transform: translateY(-7px) rotate(-7deg) scale(1.03); }
+  80% { transform: translateY(3px) rotate(4deg) scale(0.98); }
+  100% { transform: translateY(0) rotate(3deg) scale(1); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
