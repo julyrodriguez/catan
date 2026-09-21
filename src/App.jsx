@@ -129,7 +129,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col justify-between">
+    <div className="min-h-screen bg-black flex flex-col justify-between select-none">
       {/* Alerta flotante de errores de acción */}
       {actionError && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-red-600/90 text-white font-semibold text-xs py-2 px-5 rounded-full shadow-2xl backdrop-blur border border-red-400 animate-bounce">

@@ -117,13 +117,13 @@ export default function GameHeader({ gameState, currentUser, onLeaveRoom }) {
         <button
           onClick={handleCopyCode}
           title="Copiar código de sala"
-          className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-900/90 border border-slate-700/80 hover:border-amber-400/60 text-xs text-amber-300 font-mono font-bold transition shadow-inner"
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-zinc-900/90 border border-zinc-700/80 hover:border-amber-400/60 text-xs text-amber-300 font-mono font-bold transition shadow-inner"
         >
           <span>{gameState.roomCode}</span>
           {copied ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} className="opacity-60" />}
         </button>
 
-        <span className="hidden md:inline-block text-[11px] font-bold text-slate-400 bg-slate-800/80 px-2 py-0.5 rounded-lg border border-slate-700">
+        <span className="hidden md:inline-block text-[11px] font-bold text-zinc-400 bg-zinc-800/80 px-2 py-0.5 rounded-lg border border-zinc-700">
           Meta: {gameState.targetPoints} PV
         </span>
       </div>
@@ -133,8 +133,8 @@ export default function GameHeader({ gameState, currentUser, onLeaveRoom }) {
         <div
           className={`w-full py-1.5 px-3 rounded-2xl flex items-center justify-center gap-2 sm:gap-3 transition-all ${
             isMyTurn
-              ? 'bg-gradient-to-r from-emerald-950/90 via-slate-900 to-emerald-950/90 border-2 border-emerald-400 shadow-lg shadow-emerald-500/20'
-              : 'bg-slate-900/80 border border-slate-800'
+              ? 'bg-gradient-to-r from-emerald-950/90 via-zinc-950 to-emerald-950/90 border-2 border-emerald-400 shadow-lg shadow-emerald-500/20'
+              : 'bg-zinc-900/80 border border-zinc-800'
           }`}
         >
           {/* Avatar del Jugador Activo con icono vectorial */}
@@ -155,18 +155,18 @@ export default function GameHeader({ gameState, currentUser, onLeaveRoom }) {
               </span>
 
               {isMyTurn ? (
-                <span className="bg-gradient-to-r from-emerald-400 to-amber-300 text-slate-950 font-black px-2.5 py-0.5 rounded-full text-[10px] tracking-wider uppercase shadow flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-slate-950 animate-ping" />
+                <span className="bg-gradient-to-r from-emerald-400 to-amber-300 text-zinc-950 font-black px-2.5 py-0.5 rounded-full text-[10px] tracking-wider uppercase shadow flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-zinc-950 animate-ping" />
                   ¡Es tu turno!
                 </span>
               ) : (
-                <span className="text-[10px] text-slate-400 font-medium">
+                <span className="text-[10px] text-zinc-400 font-medium">
                   (En juego)
                 </span>
               )}
             </div>
 
-            <p className="text-[11px] text-slate-200 font-medium truncate hidden xs:block">
+            <p className="text-[11px] text-zinc-200 font-medium truncate hidden xs:block">
               {getTurnMessage()}
             </p>
           </div>
@@ -176,7 +176,7 @@ export default function GameHeader({ gameState, currentUser, onLeaveRoom }) {
       {/* 3. Lado Derecho: Dados 3D, Sonido y Salir */}
       <div className="flex items-center gap-2 sm:gap-3">
         {/* Dados y Resultado */}
-        <div className="flex items-center gap-1.5 bg-slate-900/90 px-2.5 py-1 rounded-xl border border-slate-700/80 shadow-inner">
+        <div className="flex items-center gap-1.5 bg-zinc-900/90 px-2.5 py-1 rounded-xl border border-zinc-700/80 shadow-inner">
           <DiceFace value={gameState.dice[0]} />
           <DiceFace value={gameState.dice[1]} />
           <div className="text-xs font-black font-mono text-amber-400 ml-1">
@@ -187,7 +187,7 @@ export default function GameHeader({ gameState, currentUser, onLeaveRoom }) {
         {/* Control de Audio */}
         <button
           onClick={handleToggleSound}
-          className="p-1.5 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition"
+          className="p-1.5 text-zinc-400 hover:text-white rounded-xl hover:bg-zinc-800 transition"
           title={muted ? 'Activar sonido' : 'Silenciar'}
         >
           {muted ? <VolumeX size={17} /> : <Volume2 size={17} />}
@@ -196,7 +196,7 @@ export default function GameHeader({ gameState, currentUser, onLeaveRoom }) {
         {/* Salir de la partida */}
         <button
           onClick={onLeaveRoom}
-          className="p-1.5 text-slate-400 hover:text-red-400 rounded-xl hover:bg-red-950/40 transition"
+          className="p-1.5 text-zinc-400 hover:text-red-400 rounded-xl hover:bg-red-950/40 transition"
           title="Abandonar partida"
         >
           <LogOut size={17} />

@@ -94,7 +94,7 @@ export default function PlayerDeck({
       )}
 
       {/* 2. Deck Principal: Cartas de Recursos (Izquierda) + Acciones y Costos (Derecha) */}
-      <div className="w-full glass-panel p-2 sm:p-2.5 flex flex-col lg:flex-row items-center justify-between gap-2 sm:gap-4 shadow-2xl border-slate-700/80">
+      <div className="w-full glass-panel p-2 sm:p-2.5 flex flex-col lg:flex-row items-center justify-between gap-2 sm:gap-4 shadow-2xl border-zinc-800">
         
         {/* SECCIÓN RECURSOS / MINERALES: Cartas Físicas */}
         <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 w-full lg:w-auto">
@@ -143,8 +143,8 @@ export default function PlayerDeck({
                   <div className="w-full flex justify-center">
                     <span className={`text-xs sm:text-sm font-mono font-black px-2 py-0.2 rounded-md border leading-none shadow-inner ${
                       hasCards
-                        ? 'bg-amber-400 text-slate-950 border-amber-300 shadow-md font-extrabold'
-                        : 'bg-black/50 text-slate-300 border-slate-700'
+                        ? 'bg-amber-400 text-zinc-950 border-amber-300 shadow-md font-extrabold'
+                        : 'bg-black/60 text-zinc-300 border-zinc-700'
                     }`}>
                       {count}
                     </span>
@@ -175,10 +175,10 @@ export default function PlayerDeck({
                 </div>
               </div>
             ) : (
-              <div className="flex items-center gap-2.5 bg-slate-900/80 border border-slate-800 py-2 px-4 rounded-xl text-slate-300">
+              <div className="flex items-center gap-2.5 bg-zinc-900/80 border border-zinc-800 py-2 px-4 rounded-xl text-zinc-300">
                 <span className="animate-spin text-amber-400">⏳</span>
                 <div className="text-xs">
-                  <span className="font-bold text-slate-200">Ronda Inicial:</span> Esperando a que <strong>{activePlayer?.username}</strong> coloque su {gameState.subphase === 'settlement' ? 'poblado' : 'carretera'}...
+                  <span className="font-bold text-zinc-200">Ronda Inicial:</span> Esperando a que <strong>{activePlayer?.username}</strong> coloque su {gameState.subphase === 'settlement' ? 'poblado' : 'carretera'}...
                 </div>
               </div>
             )
@@ -197,7 +197,7 @@ export default function PlayerDeck({
 
           {/* MENSAJE DE ESPERA CUANDO OTRO JUGADOR ESTÁ EN SU TURNO NORMAL */}
           {!isMyTurn && !isSetup && (
-            <div className="flex items-center gap-2 text-xs text-slate-300 py-2 px-3.5 rounded-xl bg-slate-900/70 border border-slate-800">
+            <div className="flex items-center gap-2 text-xs text-zinc-300 py-2 px-3.5 rounded-xl bg-zinc-900/70 border border-zinc-800">
               <span className="animate-spin text-amber-400">⏳</span>
               <span>Turno de <strong>{activePlayer?.username}</strong> ({gameState.subphase === 'roll' ? 'Tirando dados...' : 'Construyendo / Comerciando...'})</span>
             </div>
@@ -220,7 +220,7 @@ export default function PlayerDeck({
                     title={missing || 'Carretera (1 Madera + 1 Arcilla)'}
                     className={`btn-action flex-col items-center py-1 px-2 text-center min-w-[72px] sm:min-w-[80px] rounded-xl transition ${
                       isSelected
-                        ? 'bg-amber-500 text-slate-950 border-amber-400 ring-2 ring-amber-400 font-bold'
+                        ? 'bg-amber-500 text-zinc-950 border-amber-400 ring-2 ring-amber-400 font-bold'
                         : active && affordable
                         ? 'border-emerald-500/70 hover:border-emerald-400 bg-emerald-950/40 text-emerald-100 shadow'
                         : 'opacity-40'
@@ -229,7 +229,7 @@ export default function PlayerDeck({
                     <div className="flex items-center gap-1 font-bold text-[11px]">
                       <GitCommitHorizontal size={13} /> Carretera
                     </div>
-                    <div className="flex items-center gap-1 text-[9px] text-slate-300 font-mono mt-0.5">
+                    <div className="flex items-center gap-1 text-[9px] text-zinc-300 font-mono mt-0.5">
                       <span>🌲1</span>
                       <span>🧱1</span>
                     </div>
@@ -251,7 +251,7 @@ export default function PlayerDeck({
                     title={missing || 'Poblado (1 Madera + 1 Arcilla + 1 Lana + 1 Trigo)'}
                     className={`btn-action flex-col items-center py-1 px-2 text-center min-w-[76px] sm:min-w-[86px] rounded-xl transition ${
                       isSelected
-                        ? 'bg-amber-500 text-slate-950 border-amber-400 ring-2 ring-amber-400 font-bold'
+                        ? 'bg-amber-500 text-zinc-950 border-amber-400 ring-2 ring-amber-400 font-bold'
                         : active && affordable
                         ? 'border-emerald-500/70 hover:border-emerald-400 bg-emerald-950/40 text-emerald-100 shadow'
                         : 'opacity-40'
@@ -260,7 +260,7 @@ export default function PlayerDeck({
                     <div className="flex items-center gap-1 font-bold text-[11px]">
                       <Home size={13} /> Poblado <span className="text-amber-400 text-[9px]">+1PV</span>
                     </div>
-                    <div className="flex items-center gap-1 text-[9px] text-slate-300 font-mono mt-0.5">
+                    <div className="flex items-center gap-1 text-[9px] text-zinc-300 font-mono mt-0.5">
                       <span>🌲1</span>
                       <span>🧱1</span>
                       <span>🐑1</span>
@@ -284,7 +284,7 @@ export default function PlayerDeck({
                     title={missing || 'Ciudad (2 Trigo + 3 Minerales)'}
                     className={`btn-action flex-col items-center py-1 px-2 text-center min-w-[76px] sm:min-w-[86px] rounded-xl transition ${
                       isSelected
-                        ? 'bg-amber-500 text-slate-950 border-amber-400 ring-2 ring-amber-400 font-bold'
+                        ? 'bg-amber-500 text-zinc-950 border-amber-400 ring-2 ring-amber-400 font-bold'
                         : active && affordable
                         ? 'border-emerald-500/70 hover:border-emerald-400 bg-emerald-950/40 text-emerald-100 shadow'
                         : 'opacity-40'
@@ -295,7 +295,7 @@ export default function PlayerDeck({
                     </div>
                     <div className="flex items-center gap-1 text-[9px] text-amber-200 font-mono font-bold mt-0.5">
                       <span>🌾2</span>
-                      <span className="bg-slate-800 px-1 rounded border border-slate-600 text-slate-100">⛰️3 Min</span>
+                      <span className="bg-zinc-800 px-1 rounded border border-zinc-600 text-zinc-100">⛰️3 Min</span>
                     </div>
                   </button>
                 );
@@ -372,7 +372,7 @@ export default function PlayerDeck({
               {isSpecialBuild && (
                 <button
                   onClick={onSkipSpecialBuild}
-                  className="btn-action bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 px-3 rounded-xl ml-auto font-bold"
+                  className="btn-action bg-zinc-800 hover:bg-zinc-700 text-zinc-300 py-2 px-3 rounded-xl ml-auto font-bold"
                 >
                   Omitir
                 </button>

@@ -59,17 +59,17 @@ export default function RobberModal({
 
             <div className="grid grid-cols-5 gap-2 my-4">
               {RESOURCES.map((r) => (
-                <div key={r.id} className="bg-slate-900/80 p-2 rounded-lg text-center border border-slate-800">
+                <div key={r.id} className="bg-zinc-900/80 p-2 rounded-lg text-center border border-zinc-800">
                   <div className="text-xl">{r.icon}</div>
-                  <div className="text-[10px] text-slate-400 font-semibold">{r.name}</div>
-                  <div className="text-[10px] text-slate-500 mb-1">
+                  <div className="text-[10px] text-zinc-400 font-semibold">{r.name}</div>
+                  <div className="text-[10px] text-zinc-500 mb-1">
                     Tiene: {myResources[r.id] || 0}
                   </div>
                   <div className="flex items-center justify-center gap-1">
                     <button
                       type="button"
                       onClick={() => setDiscard({ ...discard, [r.id]: Math.max(0, discard[r.id] - 1) })}
-                      className="w-5 h-5 rounded bg-slate-800 text-xs font-bold text-slate-300"
+                      className="w-5 h-5 rounded bg-zinc-800 text-xs font-bold text-zinc-300"
                     >
                       -
                     </button>
@@ -78,7 +78,7 @@ export default function RobberModal({
                       type="button"
                       disabled={discard[r.id] >= (myResources[r.id] || 0) || currentDiscardTotal >= needed}
                       onClick={() => setDiscard({ ...discard, [r.id]: discard[r.id] + 1 })}
-                      className="w-5 h-5 rounded bg-slate-800 text-xs font-bold text-slate-300 disabled:opacity-30"
+                      className="w-5 h-5 rounded bg-zinc-800 text-xs font-bold text-zinc-300 disabled:opacity-30"
                     >
                       +
                     </button>
@@ -114,7 +114,7 @@ export default function RobberModal({
               <h3 className="text-xl font-bold font-cinzel text-amber-400">
                 Robo del Ladrón
               </h3>
-              <p className="text-xs text-slate-300 mt-1">
+              <p className="text-xs text-zinc-300 mt-1">
                 Elige a uno de los colonos que tienen poblado o ciudad en este hexágono para robarle 1 recurso al azar:
               </p>
             </div>
@@ -128,12 +128,12 @@ export default function RobberModal({
                   <button
                     key={vId}
                     onClick={() => handleSelectVictim(vId)}
-                    className="w-full p-3 rounded-xl border border-slate-700 bg-slate-900/80 hover:bg-slate-800 hover:border-amber-400 transition flex items-center justify-between group text-left"
+                    className="w-full p-3 rounded-xl border border-zinc-700 bg-zinc-900/80 hover:bg-zinc-800 hover:border-amber-400 transition flex items-center justify-between group text-left"
                   >
                     <div className="flex items-center gap-3">
                       <div
                         className="w-9 h-9 rounded-full flex items-center justify-center text-lg border"
-                        style={{ borderColor: victim.color, backgroundColor: '#0f172a' }}
+                        style={{ borderColor: victim.color, backgroundColor: '#09090d' }}
                       >
                         {victim.avatar}
                       </div>
@@ -141,13 +141,13 @@ export default function RobberModal({
                         <div className="font-bold text-sm text-white group-hover:text-amber-300 transition">
                           {victim.username}
                         </div>
-                        <div className="text-xs text-slate-400">
+                        <div className="text-xs text-zinc-400">
                           {victim.resourceCount} cartas en mano
                         </div>
                       </div>
                     </div>
 
-                    <span className="btn-action bg-amber-500/20 text-amber-300 text-xs py-1 px-3 border-amber-500/30 group-hover:bg-amber-500 group-hover:text-slate-950 transition">
+                    <span className="btn-action bg-amber-500/20 text-amber-300 text-xs py-1 px-3 border-amber-500/30 group-hover:bg-amber-500 group-hover:text-zinc-950 transition">
                       <UserCheck size={14} /> Robar
                     </span>
                   </button>

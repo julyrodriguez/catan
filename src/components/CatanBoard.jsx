@@ -1,5 +1,6 @@
 // src/components/CatanBoard.jsx
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
+import { ZoomIn, ZoomOut, RotateCcw, Maximize2 } from 'lucide-react';
 import { sounds } from '../utils/soundEffects';
 
 const TERRAIN_CONFIG = {
@@ -42,15 +43,15 @@ const TERRAIN_CONFIG = {
 };
 
 const PORT_CONFIG = {
-  'any': { ratio: '3:1', label: '?', color: '#f59e0b', ringColor: '#d97706' },
-  'wood': { ratio: '2:1', label: 'Madera', color: '#22c55e', ringColor: '#16a34a' },
-  'brick': { ratio: '2:1', label: 'Arcilla', color: '#f97316', ringColor: '#ea580c' },
-  'sheep': { ratio: '2:1', label: 'Oveja', color: '#84cc16', ringColor: '#65a30d' },
-  'wheat': { ratio: '2:1', label: 'Trigo', color: '#eab308', ringColor: '#ca8a04' },
-  'ore': { ratio: '2:1', label: 'Mineral', color: '#cbd5e1', ringColor: '#94a3b8' }
+  'any': { ratio: '3:1', label: 'Cualquiera', name: 'Puerto 3:1', color: '#f59e0b', ringColor: '#d97706', glow: 'rgba(245, 158, 11, 0.45)' },
+  'wood': { ratio: '2:1', label: 'Madera', name: 'Puerto 2:1', color: '#22c55e', ringColor: '#16a34a', glow: 'rgba(34, 197, 94, 0.45)' },
+  'brick': { ratio: '2:1', label: 'Arcilla', name: 'Puerto 2:1', color: '#f97316', ringColor: '#ea580c', glow: 'rgba(249, 115, 22, 0.45)' },
+  'sheep': { ratio: '2:1', label: 'Lana', name: 'Puerto 2:1', color: '#84cc16', ringColor: '#65a30d', glow: 'rgba(132, 204, 22, 0.45)' },
+  'wheat': { ratio: '2:1', label: 'Trigo', name: 'Puerto 2:1', color: '#eab308', ringColor: '#ca8a04', glow: 'rgba(234, 179, 8, 0.45)' },
+  'ore': { ratio: '2:1', label: 'Mineral', name: 'Puerto 2:1', color: '#cbd5e1', ringColor: '#94a3b8', glow: 'rgba(203, 213, 225, 0.45)' }
 };
 
-// Componente para Dibujar el Barco Mercante y Muelles
+// Componente para Dibujar el Barco Mercante y Muelles Colonist
 function PortShip({ port, board }) {
   const v1 = board.vertices[port.v1];
   const v2 = board.vertices[port.v2];
@@ -61,7 +62,7 @@ function PortShip({ port, board }) {
 
   // Vector hacia el océano desde el centro (0,0)
   const seaAngle = Math.atan2(midY, midX);
-  const dockDist = 44; // Distancia hacia el mar
+  const dockDist = 56; // Distancia hacia el mar para dar espacio óptimo
   const shipX = midX + Math.cos(seaAngle) * dockDist;
   const shipY = midY + Math.sin(seaAngle) * dockDist;
 
@@ -73,14 +74,14 @@ function PortShip({ port, board }) {
   const pInfo = PORT_CONFIG[port.resource] || PORT_CONFIG['any'];
 
   // Puntos de anclaje de los muelles de madera hacia el barco
-  const pier1EndX = v1.x + (shipX - v1.x) * 0.82;
-  const pier1EndY = v1.y + (shipY - v1.y) * 0.82;
-  const pier2EndX = v2.x + (shipX - v2.x) * 0.82;
-  const pier2EndY = v2.y + (shipY - v2.y) * 0.82;
+  const pier1EndX = v1.x + (shipX - v1.x) * 0.78;
+  const pier1EndY = v1.y + (shipY - v1.y) * 0.78;
+  const pier2EndX = v2.x + (shipX - v2.x) * 0.78;
+  const pier2EndY = v2.y + (shipY - v2.y) * 0.78;
 
   // Posición del Escudo de Comercio (centrado y vertical para legibilidad total)
-  const badgeX = shipX + Math.cos(seaAngle) * 8;
-  const badgeY = shipY + Math.sin(seaAngle) * 8;
+  const badgeX = shipX + Math.cos(seaAngle) * 9;
+  const badgeY = shipY + Math.sin(seaAngle) * 9;
 
   return (
     <g className="port-ship-group select-none pointer-events-none">
@@ -89,18 +90,16 @@ function PortShip({ port, board }) {
       <line
         x1={v1.x} y1={v1.y}
         x2={pier1EndX} y2={pier1EndY}
-        stroke="#271306"
-        strokeWidth="5.5"
+        stroke="#1a0d05"
+        strokeWidth="6.5"
         strokeLinecap="round"
-        opacity="0.9"
       />
       <line
         x1={v2.x} y1={v2.y}
         x2={pier2EndX} y2={pier2EndY}
-        stroke="#271306"
-        strokeWidth="5.5"
+        stroke="#1a0d05"
+        strokeWidth="6.5"
         strokeLinecap="round"
-        opacity="0.9"
       />
 
       {/* Tablones superiores de roble con textura de listones */}
@@ -108,159 +107,180 @@ function PortShip({ port, board }) {
         x1={v1.x} y1={v1.y}
         x2={pier1EndX} y2={pier1EndY}
         stroke="#b45309"
-        strokeWidth="3.2"
-        strokeDasharray="3 1.5"
+        strokeWidth="3.8"
+        strokeDasharray="4 2"
       />
       <line
         x1={v2.x} y1={v2.y}
         x2={pier2EndX} y2={pier2EndY}
         stroke="#b45309"
-        strokeWidth="3.2"
-        strokeDasharray="3 1.5"
+        strokeWidth="3.8"
+        strokeDasharray="4 2"
       />
 
       {/* Postes de amarre en los vértices */}
-      <circle cx={v1.x} cy={v1.y} r="3.5" fill="#451a03" stroke="#d97706" strokeWidth="1" />
-      <circle cx={v2.x} cy={v2.y} r="3.5" fill="#451a03" stroke="#d97706" strokeWidth="1" />
+      <circle cx={v1.x} cy={v1.y} r="4.5" fill="#2e1403" stroke="#d97706" strokeWidth="1.2" />
+      <circle cx={v2.x} cy={v2.y} r="4.5" fill="#2e1403" stroke="#d97706" strokeWidth="1.2" />
 
       {/* 2. El Barco Mercante de Vela (Carabela estilo Colonist) */}
       <g transform={`translate(${shipX}, ${shipY}) rotate(${coastAngleDeg})`} filter="url(#pieceShadow)">
-        {/* Estela de agua y espuma bajo el casco */}
-        <ellipse cx="0" cy="3" rx="24" ry="11" fill="rgba(56, 189, 248, 0.15)" />
-        <ellipse cx="0" cy="3" rx="28" ry="13" fill="none" stroke="rgba(56, 189, 248, 0.35)" strokeWidth="0.8" strokeDasharray="4 3" />
+        {/* Estela sutil de agua bajo el casco */}
+        <ellipse cx="0" cy="3" rx="26" ry="12" fill="rgba(255, 255, 255, 0.08)" />
+        <ellipse cx="0" cy="3" rx="30" ry="14" fill="none" stroke="rgba(255, 255, 255, 0.15)" strokeWidth="0.8" strokeDasharray="4 3" />
 
         {/* Casco de madera con curvatura náutica */}
         <path
-          d="M -21,-5 C -15,11 15,11 21,-5 C 12,-1 -12,-1 -21,-5 Z"
+          d="M -23,-5 C -17,12 17,12 23,-5 C 13,-1 -13,-1 -23,-5 Z"
           fill="url(#hullWoodGrad)"
-          stroke="#261204"
-          strokeWidth="1.2"
+          stroke="#1c0e04"
+          strokeWidth="1.4"
         />
 
         {/* Línea dorada de regala / borda */}
         <path
-          d="M -18,-3 C -10,6 10,6 18,-3"
+          d="M -20,-3 C -11,7 11,7 20,-3"
           fill="none"
           stroke="#f59e0b"
-          strokeWidth="1"
+          strokeWidth="1.2"
           opacity="0.85"
         />
         {/* Cubierta de madera */}
-        <line x1="-12" y1="-1" x2="12" y2="-1" stroke="#92400e" strokeWidth="1.2" />
+        <line x1="-14" y1="-1" x2="14" y2="-1" stroke="#92400e" strokeWidth="1.3" />
 
         {/* Mástil principal de madera */}
-        <line x1="0" y1="-2" x2="0" y2="-24" stroke="#3b1d08" strokeWidth="2.4" strokeLinecap="round" />
+        <line x1="0" y1="-2" x2="0" y2="-26" stroke="#3b1d08" strokeWidth="2.6" strokeLinecap="round" />
         {/* Verga horizontal (cruceta de la vela) */}
-        <line x1="-14" y1="-18" x2="14" y2="-18" stroke="#3b1d08" strokeWidth="1.5" strokeLinecap="round" />
+        <line x1="-16" y1="-20" x2="16" y2="-20" stroke="#3b1d08" strokeWidth="1.6" strokeLinecap="round" />
 
         {/* Cabos / Aparejos de jarcia náutica */}
-        <line x1="0" y1="-22" x2="-17" y2="-4" stroke="#f1f5f9" strokeWidth="0.6" opacity="0.45" />
-        <line x1="0" y1="-22" x2="17" y2="-4" stroke="#f1f5f9" strokeWidth="0.6" opacity="0.45" />
+        <line x1="0" y1="-24" x2="-19" y2="-4" stroke="#f1f5f9" strokeWidth="0.7" opacity="0.45" />
+        <line x1="0" y1="-24" x2="19" y2="-4" stroke="#f1f5f9" strokeWidth="0.7" opacity="0.45" />
 
         {/* Vela blanca hinchada por el viento */}
         <path
-          d="M -13,-18 Q 0,-23 13,-18 Q 16,-7 11,-8 Q 0,-12 -11,-8 Q -16,-7 -13,-18 Z"
+          d="M -15,-20 Q 0,-26 15,-20 Q 18,-8 12,-9 Q 0,-14 -12,-9 Q -18,-8 -15,-20 Z"
           fill="url(#sailGrad)"
           stroke="#94a3b8"
-          strokeWidth="0.8"
+          strokeWidth="0.9"
         />
         {/* Pliegues de la tela */}
-        <line x1="-4" y1="-18" x2="-3" y2="-9" stroke="#cbd5e1" strokeWidth="0.6" />
-        <line x1="4" y1="-18" x2="3" y2="-9" stroke="#cbd5e1" strokeWidth="0.6" />
+        <line x1="-5" y1="-20" x2="-4" y2="-10" stroke="#cbd5e1" strokeWidth="0.7" />
+        <line x1="5" y1="-20" x2="4" y2="-10" stroke="#cbd5e1" strokeWidth="0.7" />
 
         {/* Gallardete / Banderín en la punta del mástil */}
         <path
-          d="M 0,-24 L 9,-27 L 0,-30 Z"
+          d="M 0,-26 L 11,-29 L 0,-33 Z"
           fill={pInfo.color}
-          stroke="#0f172a"
-          strokeWidth="0.5"
+          stroke="#09090d"
+          strokeWidth="0.6"
         />
       </g>
 
-      {/* 3. Escudo Medallón de Comercio (orientado 100% vertical y legible) */}
+      {/* 3. Escudo Medallón de Comercio GRANDE y ULTRA CLARO (Estilo Colonist.io) */}
       <g transform={`translate(${badgeX}, ${badgeY})`} filter="url(#chitShadow)">
-        {/* Medalla circular con borde de color de recurso */}
+        {/* Halo de resplandor exterior suave */}
         <circle
-          cx="0" cy="0" r="14.5"
-          fill="#090d16"
-          stroke={pInfo.color}
-          strokeWidth="2.2"
-        />
-        {/* Anillo interior decorativo de latón */}
-        <circle
-          cx="0" cy="0" r="12"
+          cx="0" cy="0" r="26"
           fill="none"
-          stroke="rgba(255, 255, 255, 0.2)"
-          strokeWidth="0.8"
+          stroke={pInfo.color}
+          strokeWidth="3"
+          opacity="0.35"
         />
 
-        {/* Proporción de comercio (3:1 o 2:1) */}
+        {/* Medalla circular de alto contraste (Diámetro 46px - Súper nítido) */}
+        <circle
+          cx="0" cy="0" r="23"
+          fill="#09090d"
+          stroke={pInfo.color}
+          strokeWidth="2.8"
+        />
+
+        {/* Anillo interior decorativo */}
+        <circle
+          cx="0" cy="0" r="19"
+          fill="none"
+          stroke="rgba(255, 255, 255, 0.25)"
+          strokeWidth="0.9"
+        />
+
+        {/* Proporción de comercio en texto grande (3:1 o 2:1) */}
         <text
-          x="0" y="-3"
+          x="0" y="-6"
           textAnchor="middle"
-          fontSize="9.5"
+          fontSize="12.5"
           fontWeight="900"
           fill="#ffffff"
-          fontFamily="ui-sans-serif, system-ui, sans-serif"
-          letterSpacing="0.02em"
+          fontFamily="ui-sans-serif, system-ui, -apple-system, sans-serif"
+          letterSpacing="0.04em"
         >
           {pInfo.ratio}
         </text>
 
-        {/* Ícono distintivo del recurso en el puerto */}
+        {/* Ícono distintivo del recurso en tamaño grande y súper definido */}
         {port.resource === 'any' && (
           <text
-            x="0" y="8"
+            x="0" y="12"
             textAnchor="middle"
-            fontSize="11"
+            fontSize="16"
             fontWeight="900"
             fill="#f59e0b"
-            fontFamily="sans-serif"
+            fontFamily="ui-sans-serif, system-ui, sans-serif"
           >
             ?
           </text>
         )}
 
         {port.resource === 'wood' && (
-          <g transform="translate(-4.5, 2) scale(0.65)">
-            {/* Troncos de madera gemelos */}
-            <rect x="0" y="0" width="14" height="4.5" rx="2" fill="#22c55e" stroke="#14532d" strokeWidth="0.8" />
-            <rect x="2" y="4.5" width="10" height="4" rx="1.8" fill="#16a34a" stroke="#14532d" strokeWidth="0.8" />
+          <g transform="translate(0, 7)">
+            {/* Troncos de madera grandes con corteza */}
+            <rect x="-8.5" y="-1.5" width="17" height="5.5" rx="2.2" fill="#22c55e" stroke="#14532d" strokeWidth="0.9" />
+            <rect x="-6" y="4.5" width="13" height="4.8" rx="2" fill="#16a34a" stroke="#14532d" strokeWidth="0.9" />
+            <circle cx="-6" cy="1.2" r="1.3" fill="#86efac" />
           </g>
         )}
 
         {port.resource === 'brick' && (
-          <g transform="translate(-5, 2.5) scale(0.65)">
-            {/* Ladrillo de terracota */}
-            <rect x="0" y="0" width="15" height="7.5" rx="1.5" fill="#f97316" stroke="#7c2d12" strokeWidth="0.8" />
-            <line x1="7.5" y1="0" x2="7.5" y2="7.5" stroke="#7c2d12" strokeWidth="0.8" />
+          <g transform="translate(0, 7)">
+            {/* Ladrillo de terracota nítido */}
+            <rect x="-9.5" y="-1" width="19" height="9.5" rx="2" fill="#f97316" stroke="#7c2d12" strokeWidth="0.9" />
+            <line x1="0" y1="-1" x2="0" y2="8.5" stroke="#7c2d12" strokeWidth="1" />
+            <line x1="-9.5" y1="3.8" x2="9.5" y2="3.8" stroke="#7c2d12" strokeWidth="0.8" />
+            <rect x="-7.5" y="0.5" width="6" height="2" rx="0.5" fill="#fb923c" />
+            <rect x="2" y="0.5" width="6" height="2" rx="0.5" fill="#fb923c" />
           </g>
         )}
 
         {port.resource === 'sheep' && (
-          <g transform="translate(-5, 2) scale(0.65)">
-            {/* Cabecita / lana de oveja */}
-            <circle cx="7" cy="4" r="5.5" fill="#ffffff" stroke="#cbd5e1" strokeWidth="0.8" />
-            <circle cx="7" cy="5" r="3.5" fill="#1e293b" />
+          <g transform="translate(0, 7)">
+            {/* Oveja esponjosa con orejitas */}
+            <ellipse cx="0" cy="2" rx="8" ry="6" fill="#ffffff" stroke="#cbd5e1" strokeWidth="0.9" />
+            <circle cx="-4" cy="0" r="3.5" fill="#ffffff" />
+            <circle cx="4" cy="0" r="3.5" fill="#ffffff" />
+            <circle cx="0" cy="3.5" r="3.5" fill="#1e293b" />
+            <circle cx="-1.2" cy="3" r="0.7" fill="#ffffff" />
+            <circle cx="1.2" cy="3" r="0.7" fill="#ffffff" />
           </g>
         )}
 
         {port.resource === 'wheat' && (
-          <g transform="translate(-4, 2) scale(0.65)">
-            {/* Espiga de trigo */}
-            <path d="M 6,9 L 6,1" stroke="#facc15" strokeWidth="1.5" strokeLinecap="round" />
-            <ellipse cx="4" cy="3" rx="2.5" ry="1.2" fill="#facc15" transform="rotate(-30 4 3)" />
-            <ellipse cx="8" cy="3" rx="2.5" ry="1.2" fill="#facc15" transform="rotate(30 8 3)" />
-            <ellipse cx="4" cy="6" rx="2.5" ry="1.2" fill="#facc15" transform="rotate(-30 4 6)" />
-            <ellipse cx="8" cy="6" rx="2.5" ry="1.2" fill="#facc15" transform="rotate(30 8 6)" />
+          <g transform="translate(0, 7)">
+            {/* Espiga de trigo dorada de gran tamaño */}
+            <path d="M 0,9 L 0,-2" stroke="#facc15" strokeWidth="1.8" strokeLinecap="round" />
+            <ellipse cx="-4" cy="1" rx="3.2" ry="1.6" fill="#fde047" stroke="#ca8a04" strokeWidth="0.6" transform="rotate(-30 -4 1)" />
+            <ellipse cx="4" cy="1" rx="3.2" ry="1.6" fill="#fde047" stroke="#ca8a04" strokeWidth="0.6" transform="rotate(30 4 1)" />
+            <ellipse cx="-3.5" cy="5" rx="3" ry="1.5" fill="#fde047" stroke="#ca8a04" strokeWidth="0.6" transform="rotate(-30 -3.5 5)" />
+            <ellipse cx="3.5" cy="5" rx="3" ry="1.5" fill="#fde047" stroke="#ca8a04" strokeWidth="0.6" transform="rotate(30 3.5 5)" />
+            <ellipse cx="0" cy="-2.5" rx="1.8" ry="2.8" fill="#fde047" stroke="#ca8a04" strokeWidth="0.6" />
           </g>
         )}
 
         {port.resource === 'ore' && (
-          <g transform="translate(-5, 2) scale(0.65)">
-            {/* Roca de mineral facetada */}
-            <polygon points="7,0 13,4 10,9 4,9 1,4" fill="#94a3b8" stroke="#475569" strokeWidth="0.8" />
-            <polygon points="7,0 13,4 7,9" fill="#64748b" />
+          <g transform="translate(0, 7)">
+            {/* Pico de mineral facetado en roca de plata */}
+            <polygon points="0,-3 9,3 6,9 -6,9 -9,3" fill="#94a3b8" stroke="#475569" strokeWidth="0.9" />
+            <polygon points="0,-3 9,3 1,9" fill="#64748b" />
+            <polygon points="0,-3 -9,3 -1,9" fill="#cbd5e1" />
+            <polygon points="0,-3 4,2 -4,2" fill="#f8fafc" />
           </g>
         )}
       </g>
@@ -564,8 +584,15 @@ export default function CatanBoard({
 
   const isMyTurn = activePlayerId === currentUserId;
 
-  // 1. Calcular ViewBox automático con margen suficiente para los barcos
-  const viewBox = useMemo(() => {
+  // Zoom & Pan interactivo del mapa (Estilo Colonist.io)
+  const [zoom, setZoom] = useState(1.15); // Zoom inicial ligeramente aumentado para mayor protagonismo
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef({ x: 0, y: 0, panX: 0, panY: 0, moved: false });
+  const containerRef = useRef(null);
+
+  // 1. Calcular ViewBox automático ajustado (mapa más grande)
+  const baseBounds = useMemo(() => {
     let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
 
     for (const h of board.hexes) {
@@ -575,11 +602,116 @@ export default function CatanBoard({
       if (h.y + 75 > maxY) maxY = h.y + 75;
     }
 
-    const padding = 95;
-    const width = maxX - minX + padding * 2;
-    const height = maxY - minY + padding * 2;
-    return `${minX - padding} ${minY - padding} ${width} ${height}`;
+    const padding = 70; // Margen optimizado para maximizar el tamaño del tablero
+    return {
+      minX: minX - padding,
+      minY: minY - padding,
+      width: maxX - minX + padding * 2,
+      height: maxY - minY + padding * 2
+    };
   }, [board]);
+
+  // ViewBox dinámico con zoom y paneo
+  const viewBox = useMemo(() => {
+    const { minX, minY, width, height } = baseBounds;
+    const currentW = width / zoom;
+    const currentH = height / zoom;
+    const scaleFactor = width / 750;
+    const currentX = minX + (width - currentW) / 2 - (pan.x * scaleFactor);
+    const currentY = minY + (height - currentH) / 2 - (pan.y * scaleFactor);
+    return `${currentX} ${currentY} ${currentW} ${currentH}`;
+  }, [baseBounds, zoom, pan]);
+
+  // Soporte de rueda de ratón (mouse wheel) suave y preventDefault
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const onWheel = (e) => {
+      e.preventDefault();
+      const zoomDelta = e.deltaY < 0 ? 0.12 : -0.12;
+      setZoom(prev => Math.min(2.8, Math.max(0.6, +(prev + zoomDelta).toFixed(2))));
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, []);
+
+  const handleMouseDown = (e) => {
+    if (e.button !== 0 && e.button !== 1) return;
+    if (e.target.closest('.interactive-node') || e.target.closest('.board-zoom-widget')) return;
+
+    dragStartRef.current = {
+      x: e.clientX,
+      y: e.clientY,
+      panX: pan.x,
+      panY: pan.y,
+      moved: false
+    };
+    setIsDragging(true);
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging) return;
+    const dx = e.clientX - dragStartRef.current.x;
+    const dy = e.clientY - dragStartRef.current.y;
+    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
+      dragStartRef.current.moved = true;
+    }
+    setPan({
+      x: dragStartRef.current.panX + dx,
+      y: dragStartRef.current.panY + dy
+    });
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  // Soporte Touch para móviles y portátiles táctiles
+  const touchStartRef = useRef({ x: 0, y: 0, panX: 0, panY: 0, dist: 0, zoom: 1 });
+
+  const handleTouchStart = (e) => {
+    if (e.target.closest('.interactive-node') || e.target.closest('.board-zoom-widget')) return;
+    if (e.touches.length === 1) {
+      touchStartRef.current = {
+        x: e.touches[0].clientX,
+        y: e.touches[0].clientY,
+        panX: pan.x,
+        panY: pan.y,
+        dist: 0,
+        zoom
+      };
+      setIsDragging(true);
+    } else if (e.touches.length === 2) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      touchStartRef.current.dist = Math.hypot(dx, dy);
+      touchStartRef.current.zoom = zoom;
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (e.touches.length === 1 && isDragging) {
+      const dx = e.touches[0].clientX - touchStartRef.current.x;
+      const dy = e.touches[0].clientY - touchStartRef.current.y;
+      if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
+        dragStartRef.current.moved = true;
+      }
+      setPan({
+        x: touchStartRef.current.panX + dx,
+        y: touchStartRef.current.panY + dy
+      });
+    } else if (e.touches.length === 2 && touchStartRef.current.dist > 0) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const dist = Math.hypot(dx, dy);
+      const ratio = dist / touchStartRef.current.dist;
+      setZoom(Math.min(2.8, Math.max(0.6, +(touchStartRef.current.zoom * ratio).toFixed(2))));
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+  };
 
   // 2. Vértices legales
   const legalVertices = useMemo(() => {
@@ -679,6 +811,7 @@ export default function CatanBoard({
   const isRobberSelectable = isMyTurn && subphase === 'robber';
 
   const handleVertexClick = (vId) => {
+    if (dragStartRef.current.moved) return;
     if (legalVertices.has(vId)) {
       sounds.playBuild();
       onSelectVertex(vId);
@@ -686,6 +819,7 @@ export default function CatanBoard({
   };
 
   const handleEdgeClick = (eId) => {
+    if (dragStartRef.current.moved) return;
     if (legalEdges.has(eId)) {
       sounds.playBuild();
       onSelectEdge(eId);
@@ -693,6 +827,7 @@ export default function CatanBoard({
   };
 
   const handleHexClick = (h) => {
+    if (dragStartRef.current.moved) return;
     if (isRobberSelectable && !h.hasRobber) {
       sounds.playCardDraw();
       onSelectHex(h.id);
@@ -700,18 +835,59 @@ export default function CatanBoard({
   };
 
   return (
-    <div className="board-container select-none">
+    <div
+      ref={containerRef}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      className={`board-container select-none ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+    >
+      {/* Widget Flotante de Zoom y Recentrado (Estilo Colonist.io) */}
+      <div className="board-zoom-widget">
+        <button
+          onClick={() => setZoom(z => Math.min(2.8, +(z + 0.2).toFixed(2)))}
+          className="zoom-btn"
+          title="Acercar mapa (+)"
+        >
+          <ZoomIn size={16} />
+        </button>
+
+        <div className="text-[10px] font-mono font-bold text-center text-slate-300 py-0.5">
+          {Math.round(zoom * 100)}%
+        </div>
+
+        <button
+          onClick={() => setZoom(z => Math.max(0.6, +(z - 0.2).toFixed(2)))}
+          className="zoom-btn"
+          title="Alejar mapa (-)"
+        >
+          <ZoomOut size={16} />
+        </button>
+
+        <button
+          onClick={() => { setZoom(1.15); setPan({ x: 0, y: 0 }); }}
+          className="zoom-btn text-amber-400 hover:text-amber-300"
+          title="Restablecer vista centrada"
+        >
+          <RotateCcw size={15} />
+        </button>
+      </div>
+
       <svg
         viewBox={viewBox}
         className="board-svg drop-shadow-2xl"
         preserveAspectRatio="xMidYMid meet"
       >
         <defs>
-          {/* Fondo oceánico con ondas y profundidad */}
-          <radialGradient id="oceanGrad" cx="50%" cy="50%" r="70%">
-            <stop offset="0%" stopColor="#0f274a" />
-            <stop offset="45%" stopColor="#08172c" />
-            <stop offset="100%" stopColor="#030814" />
+          {/* Fondo oceánico negro / carbón elegante Colonist */}
+          <radialGradient id="oceanGrad" cx="50%" cy="50%" r="75%">
+            <stop offset="0%" stopColor="#141419" />
+            <stop offset="45%" stopColor="#0a0a0d" />
+            <stop offset="100%" stopColor="#000000" />
           </radialGradient>
 
           {/* Gradients de Terrenos con iluminación natural estilo Colonist */}
@@ -769,13 +945,13 @@ export default function CatanBoard({
           </filter>
         </defs>
 
-        {/* 1. Océano infinito */}
-        <rect x="-3000" y="-3000" width="6000" height="6000" fill="url(#oceanGrad)" />
+        {/* 1. Océano infinito (Negro estilo Colonist) */}
+        <rect x="-6000" y="-6000" width="12000" height="12000" fill="url(#oceanGrad)" />
 
-        {/* Ondas náuticas concéntricas decorativas */}
-        <circle cx="0" cy="0" r="320" fill="none" stroke="#1e3a5f" strokeWidth="1.2" strokeDasharray="8 12" opacity="0.3" />
-        <circle cx="0" cy="0" r="440" fill="none" stroke="#1e3a5f" strokeWidth="1.2" strokeDasharray="12 16" opacity="0.22" />
-        <circle cx="0" cy="0" r="560" fill="none" stroke="#1e3a5f" strokeWidth="1" strokeDasharray="16 20" opacity="0.15" />
+        {/* Ondas náuticas concéntricas decorativas en tonos carbón */}
+        <circle cx="0" cy="0" r="320" fill="none" stroke="rgba(255, 255, 255, 0.06)" strokeWidth="1.2" strokeDasharray="8 12" />
+        <circle cx="0" cy="0" r="440" fill="none" stroke="rgba(255, 255, 255, 0.04)" strokeWidth="1.2" strokeDasharray="12 16" />
+        <circle cx="0" cy="0" r="560" fill="none" stroke="rgba(255, 255, 255, 0.03)" strokeWidth="1" strokeDasharray="16 20" />
 
         {/* 2. Puertos Costeros con Barcos Mercantes a Vela (Colonist style) */}
         {board.ports && board.ports.map((port) => (
@@ -799,7 +975,7 @@ export default function CatanBoard({
             <g
               key={hex.id}
               onClick={() => handleHexClick(hex)}
-              className={isTarget ? 'hex-robber-target' : ''}
+              className={isTarget ? 'hex-robber-target interactive-node' : ''}
             >
               {/* Borde exterior del hexágono (tablero de juego con bisel) */}
               <polygon
@@ -912,7 +1088,7 @@ export default function CatanBoard({
           const hasRoad = Boolean(edge.road);
 
           return (
-            <g key={edge.id} onClick={() => handleEdgeClick(edge.id)}>
+            <g key={edge.id} onClick={() => handleEdgeClick(edge.id)} className={isLegal ? 'interactive-node' : ''}>
               {/* Carretera de madera construida */}
               {hasRoad && (
                 <g filter="url(#pieceShadow)">
@@ -974,7 +1150,7 @@ export default function CatanBoard({
             <g
               key={vertex.id}
               onClick={() => handleVertexClick(vertex.id)}
-              className="vertex-node"
+              className={`vertex-node ${isLegal || b ? 'interactive-node' : ''}`}
             >
               {/* Poblado: Cabaña de madera 3D */}
               {b && b.type === 'settlement' && (

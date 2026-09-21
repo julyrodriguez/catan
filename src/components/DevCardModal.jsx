@@ -82,15 +82,15 @@ export default function DevCardModal({
           </h2>
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition"
+            className="p-1.5 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800 transition"
           >
             <X size={18} />
           </button>
         </div>
 
         {devCards.length === 0 ? (
-          <div className="text-center py-8 text-slate-400 text-sm">
-            <Sparkles size={32} className="mx-auto mb-2 text-slate-600" />
+          <div className="text-center py-8 text-zinc-400 text-sm">
+            <Sparkles size={32} className="mx-auto mb-2 text-zinc-600" />
             No tienes cartas de desarrollo en mano. Puedes comprar una en tu turno por 1 Oveja, 1 Trigo y 1 Mineral.
           </div>
         ) : (
@@ -103,7 +103,7 @@ export default function DevCardModal({
               return (
                 <div
                   key={idx}
-                  className="p-3.5 rounded-xl border border-slate-700/80 bg-slate-900/60 space-y-2"
+                  className="p-3.5 rounded-xl border border-zinc-700/80 bg-zinc-900/60 space-y-2"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5 font-bold text-sm text-white">
@@ -112,22 +112,22 @@ export default function DevCardModal({
                     </div>
 
                     {isBoughtThisTurn && (
-                      <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded border border-slate-700">
+                      <span className="text-[10px] bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded border border-zinc-700">
                         Comprada este turno
                       </span>
                     )}
                   </div>
 
-                  <p className="text-xs text-slate-400 leading-relaxed">{info.desc}</p>
+                  <p className="text-xs text-zinc-400 leading-relaxed">{info.desc}</p>
 
                   {/* Configuración de Monopolio */}
                   {card.type === 'monopoly' && canPlay && (
                     <div className="flex items-center gap-2 pt-2 text-xs">
-                      <span className="text-slate-300">Recurso a monopolizar:</span>
+                      <span className="text-zinc-300">Recurso a monopolizar:</span>
                       <select
                         value={monopolyResource}
                         onChange={(e) => setMonopolyResource(e.target.value)}
-                        className="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-white font-semibold"
+                        className="bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-white font-semibold"
                       >
                         {RESOURCES.map(r => (
                           <option key={r.id} value={r.id}>{r.icon} {r.name}</option>
@@ -139,11 +139,11 @@ export default function DevCardModal({
                   {/* Configuración de Año de la Abundancia */}
                   {card.type === 'year_of_plenty' && canPlay && (
                     <div className="flex items-center gap-2 pt-2 text-xs">
-                      <span className="text-slate-300">Elige 2 recursos:</span>
+                      <span className="text-zinc-300">Elige 2 recursos:</span>
                       <select
                         value={yopR1}
                         onChange={(e) => setYopR1(e.target.value)}
-                        className="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-white font-semibold"
+                        className="bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-white font-semibold"
                       >
                         {RESOURCES.map(r => (
                           <option key={r.id} value={r.id}>{r.icon} {r.name}</option>
@@ -152,7 +152,7 @@ export default function DevCardModal({
                       <select
                         value={yopR2}
                         onChange={(e) => setYopR2(e.target.value)}
-                        className="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-white font-semibold"
+                        className="bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-white font-semibold"
                       >
                         {RESOURCES.map(r => (
                           <option key={r.id} value={r.id}>{r.icon} {r.name}</option>
@@ -165,7 +165,7 @@ export default function DevCardModal({
                     <div className="pt-2 flex justify-end">
                       <button
                         onClick={() => handlePlayCard(card.type)}
-                        className="btn-action bg-amber-500 text-slate-950 hover:bg-amber-400 font-bold text-xs py-1.5 px-4"
+                        className="btn-action bg-amber-500 text-zinc-950 hover:bg-amber-400 font-bold text-xs py-1.5 px-4"
                       >
                         Jugar Carta
                       </button>

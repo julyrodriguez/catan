@@ -6,8 +6,8 @@
     --font-serif: 'Cinzel', serif;
     --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
     
-    --bg-dark: #070b14;
-    --bg-panel: rgba(13, 20, 36, 0.88);
+    --bg-dark: #000000;
+    --bg-panel: rgba(13, 13, 16, 0.92);
     --border-gold: rgba(245, 158, 11, 0.35);
     --gold-glow: 0 0 25px rgba(245, 158, 11, 0.25);
   }
@@ -19,10 +19,9 @@
     min-height: 100vh;
     overflow-x: hidden;
     background-image: 
-      radial-gradient(circle at 10% 20%, rgba(30, 58, 138, 0.18) 0%, transparent 45%),
-      radial-gradient(circle at 90% 80%, rgba(180, 83, 9, 0.15) 0%, transparent 45%),
-      radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 0.5) 0%, transparent 100%),
-      linear-gradient(to bottom, #060911, #0b1120);
+      radial-gradient(circle at 50% 15%, rgba(35, 35, 45, 0.35) 0%, transparent 60%),
+      radial-gradient(circle at 85% 85%, rgba(25, 25, 32, 0.25) 0%, transparent 50%),
+      linear-gradient(to bottom, #000000, #08080a);
     background-attachment: fixed;
   }
 }
@@ -39,25 +38,25 @@ h1, h2, h3, .font-cinzel {
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 20px;
   box-shadow: 
-    0 15px 35px -10px rgba(0, 0, 0, 0.7),
-    0 0 0 1px rgba(255, 255, 255, 0.05),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    0 15px 35px -10px rgba(0, 0, 0, 0.8),
+    0 0 0 1px rgba(255, 255, 255, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .glass-card {
-  background: rgba(19, 29, 49, 0.7);
+  background: rgba(18, 18, 22, 0.75);
   backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.07);
   border-radius: 14px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .glass-card:hover {
-  background: rgba(28, 42, 70, 0.85);
-  border-color: rgba(245, 158, 11, 0.3);
+  background: rgba(28, 28, 35, 0.9);
+  border-color: rgba(245, 158, 11, 0.35);
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 15px rgba(245, 158, 11, 0.1);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 15px rgba(245, 158, 11, 0.15);
 }
 
 /* Botones con estilo medieval moderno */
@@ -243,12 +242,58 @@ h1, h2, h3, .font-cinzel {
   justify-content: center;
   overflow: hidden;
   user-select: none;
+  background-color: #000000;
 }
 
 .board-svg {
   width: 100%;
   height: 100%;
-  max-height: 58vh;
+  max-height: 100%;
+  display: block;
+}
+
+/* Floating Zoom Controls */
+.board-zoom-widget {
+  position: absolute;
+  right: 16px;
+  top: 16px;
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: rgba(10, 10, 14, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 5px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+}
+
+.zoom-btn {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: rgba(26, 26, 32, 0.8);
+  color: #f1f5f9;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.zoom-btn:hover:not(:disabled) {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: rgba(245, 158, 11, 0.5);
+  color: #fbbf24;
+  transform: scale(1.05);
+}
+
+.zoom-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 /* Hexágonos de Terreno */
@@ -365,9 +410,9 @@ h1, h2, h3, .font-cinzel {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(3, 7, 18, 0.82);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(0, 0, 0, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   z-index: 100;
   display: flex;
   align-items: center;
@@ -377,13 +422,13 @@ h1, h2, h3, .font-cinzel {
 }
 
 .modal-content {
-  background: #0d1527;
-  border: 1px solid rgba(245, 158, 11, 0.25);
+  background: #09090d;
+  border: 1px solid rgba(245, 158, 11, 0.3);
   border-radius: 24px;
   box-shadow: 
-    0 25px 60px -15px rgba(0, 0, 0, 0.8),
-    0 0 40px rgba(245, 158, 11, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    0 25px 60px -15px rgba(0, 0, 0, 0.95),
+    0 0 40px rgba(245, 158, 11, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
   max-width: 90vw;
   max-height: 90vh;
   overflow-y: auto;

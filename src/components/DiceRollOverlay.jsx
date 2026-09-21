@@ -112,16 +112,16 @@ export default function DiceRollOverlay({ gameState }) {
         onClick={(e) => e.stopPropagation()}
         className={`relative w-full max-w-md p-6 sm:p-8 rounded-3xl border-2 shadow-2xl flex flex-col items-center gap-5 text-center transition-all transform ${
           isSeven
-            ? 'bg-gradient-to-b from-red-950/95 via-slate-950/95 to-slate-950/95 border-red-500/80 shadow-red-600/30'
+            ? 'bg-gradient-to-b from-red-950/95 via-zinc-950/95 to-zinc-950/95 border-red-500/80 shadow-red-600/30'
             : isKeyNumber
-            ? 'bg-gradient-to-b from-amber-950/95 via-slate-950/95 to-slate-950/95 border-amber-400/80 shadow-amber-500/30'
-            : 'bg-gradient-to-b from-slate-900/95 via-slate-950/95 to-slate-950/95 border-amber-500/40 shadow-amber-500/10'
+            ? 'bg-gradient-to-b from-amber-950/95 via-zinc-950/95 to-zinc-950/95 border-amber-400/80 shadow-amber-500/30'
+            : 'bg-gradient-to-b from-zinc-900/95 via-zinc-950/95 to-zinc-950/95 border-amber-500/40 shadow-amber-500/10'
         }`}
       >
         {/* Botón Cerrar */}
         <button
           onClick={() => setVisible(false)}
-          className="absolute top-4 right-4 p-1.5 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition"
+          className="absolute top-4 right-4 p-1.5 text-zinc-400 hover:text-white rounded-xl hover:bg-zinc-800 transition"
         >
           <X size={18} />
         </button>
