@@ -33,7 +33,7 @@ export default function ChatAndLogs({
   };
 
   return (
-    <div className="glass-panel p-3 flex flex-col h-72 w-full max-w-xs">
+    <div className="glass-panel p-3 flex flex-col h-full w-full">
       <div className="flex items-center gap-2 pb-2 border-b border-zinc-800 mb-2">
         <button
           onClick={() => setActiveTab('logs')}

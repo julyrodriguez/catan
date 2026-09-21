@@ -168,7 +168,7 @@ export default function App() {
 
           {/* Área Central: Sidebar Izquierdo + Tablero SVG + Sidebar Derecho */}
           <div className="min-h-0 flex-1 flex items-center justify-between gap-2 sm:gap-3 my-1 overflow-hidden relative">
-            {/* Sidebar Jugadores */}
+            {/* Sidebar Jugadores (Izquierda) */}
             <div className="hidden md:block shrink-0 h-full overflow-y-auto">
               <SidebarPlayers
                 gameState={gameState}
@@ -177,8 +177,8 @@ export default function App() {
               />
             </div>
 
-            {/* Tablero Hexagonal */}
-            <div className="flex-1 h-full flex items-center justify-center relative">
+            {/* Tablero Hexagonal (Centro con máximo espacio) */}
+            <div className="flex-1 h-full flex items-center justify-center relative overflow-hidden">
               <CatanBoard
                 board={gameState.board}
                 activePlayerId={gameState.activePlayerId}
@@ -192,29 +192,53 @@ export default function App() {
               />
             </div>
 
-            {/* Sidebar Chat e Historial */}
-            <div className="hidden lg:block shrink-0 h-full">
-              <ChatAndLogs
-                logs={gameState.logs}
-                currentUser={currentUser}
-              />
+            {/* Sidebar Derecho: Cartas de Recursos y Acciones ARRIBA + Chat e Historial ABAJO (Colonist style) */}
+            <div className="hidden lg:flex flex-col shrink-0 h-full w-80 xl:w-88 gap-2 overflow-hidden justify-between">
+              {/* Cartas de Recursos y Acciones */}
+              <div className="shrink-0 overflow-y-auto max-h-[58vh]">
+                <PlayerDeck
+                  gameState={gameState}
+                  myPrivateState={myPrivateState}
+                  currentUser={currentUser}
+                  buildMode={buildMode}
+                  setBuildMode={setBuildMode}
+                  onRollDice={() => socketClient.send('roll_dice')}
+                  onBuyDevCard={() => socketClient.send('buy_dev_card')}
+                  onEndTurn={() => socketClient.send('end_turn')}
+                  onSkipSpecialBuild={() => socketClient.send('skip_special_build')}
+                  onOpenTradeModal={() => setShowTradeModal(true)}
+                  onOpenDevCardModal={() => setShowDevCardModal(true)}
+                  sidebarMode={true}
+                />
+              </div>
+
+              {/* Chat e Historial abajo ocupando el resto */}
+              <div className="flex-1 min-h-0 overflow-hidden">
+                <ChatAndLogs
+                  logs={gameState.logs}
+                  currentUser={currentUser}
+                />
+              </div>
             </div>
           </div>
 
-          {/* Deck Inferior: Mano de Recursos (Madera, Arcilla, Lana, Trigo, Mineral) + Acciones de Construcción */}
-          <PlayerDeck
-            gameState={gameState}
-            myPrivateState={myPrivateState}
-            currentUser={currentUser}
-            buildMode={buildMode}
-            setBuildMode={setBuildMode}
-            onRollDice={() => socketClient.send('roll_dice')}
-            onBuyDevCard={() => socketClient.send('buy_dev_card')}
-            onEndTurn={() => socketClient.send('end_turn')}
-            onSkipSpecialBuild={() => socketClient.send('skip_special_build')}
-            onOpenTradeModal={() => setShowTradeModal(true)}
-            onOpenDevCardModal={() => setShowDevCardModal(true)}
-          />
+          {/* En móviles y pantallas pequeñas (< lg), mostrar el PlayerDeck inferior */}
+          <div className="lg:hidden shrink-0">
+            <PlayerDeck
+              gameState={gameState}
+              myPrivateState={myPrivateState}
+              currentUser={currentUser}
+              buildMode={buildMode}
+              setBuildMode={setBuildMode}
+              onRollDice={() => socketClient.send('roll_dice')}
+              onBuyDevCard={() => socketClient.send('buy_dev_card')}
+              onEndTurn={() => socketClient.send('end_turn')}
+              onSkipSpecialBuild={() => socketClient.send('skip_special_build')}
+              onOpenTradeModal={() => setShowTradeModal(true)}
+              onOpenDevCardModal={() => setShowDevCardModal(true)}
+              sidebarMode={false}
+            />
+          </div>
         </div>
       )}
 

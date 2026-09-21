@@ -34,7 +34,8 @@ export default function PlayerDeck({
   onEndTurn,
   onSkipSpecialBuild,
   onOpenTradeModal,
-  onOpenDevCardModal
+  onOpenDevCardModal,
+  sidebarMode = false
 }) {
   const activePlayer = gameState.players.find(p => p.id === gameState.activePlayerId) || 
                        gameState.players[gameState.currentTurnIndex];
@@ -69,6 +70,287 @@ export default function PlayerDeck({
     sounds.playDiceRoll();
     onRollDice();
   };
+
+  // VISTA EN SIDEBAR DERECHO (Arriba del chat/historial estilo Colonist)
+  if (sidebarMode) {
+    return (
+      <div className="w-full flex flex-col gap-2 select-none">
+        {/* Alerta Flotante si hay Modo de Construcción Activo */}
+        {buildMode && (
+          <div className="glass-panel px-3 py-2 flex items-center justify-between gap-2 bg-amber-950/95 border border-amber-400 shadow-xl">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-amber-200">
+              <Hammer size={15} className="text-amber-400 shrink-0 animate-bounce" />
+              <span className="truncate">
+                {buildMode === 'road' && 'Coloca Carretera en arista dorada'}
+                {buildMode === 'settlement' && 'Coloca Poblado en vértice (+1 PV)'}
+                {buildMode === 'city' && 'Mejora Poblado a Ciudad (+1 PV)'}
+              </span>
+            </div>
+            <button
+              onClick={() => setBuildMode(null)}
+              className="text-[10px] font-black bg-red-600 hover:bg-red-500 text-white px-2 py-0.5 rounded-lg shadow transition shrink-0"
+            >
+              Cancelar
+            </button>
+          </div>
+        )}
+
+        {/* Panel de Cartas de Recursos */}
+        <div className="glass-panel p-3 flex flex-col gap-2.5 shadow-xl border-zinc-800">
+          <div className="flex items-center justify-between pb-1.5 border-b border-zinc-800">
+            <span className="font-cinzel text-xs font-black tracking-wider text-amber-400 uppercase">
+              Tus Recursos ({totalCards})
+            </span>
+            {totalCards > 7 && (
+              <span className="text-[10px] font-bold bg-red-500/20 text-red-300 border border-red-500/40 px-2 py-0.5 rounded-full flex items-center gap-1 animate-pulse">
+                <ShieldAlert size={11} /> ¡Peligro de 7!
+              </span>
+            )}
+          </div>
+
+          {/* Fila de las 5 Cartas de Recursos */}
+          <div className="grid grid-cols-5 gap-1.5">
+            {Object.entries(RESOURCE_META).map(([key, meta]) => {
+              const count = resources[key] || 0;
+              const Icon = meta.icon;
+              const hasCards = count > 0;
+
+              return (
+                <div
+                  key={key}
+                  className={`relative flex flex-col justify-between items-center h-[72px] rounded-xl border p-1 transition-all select-none shadow-sm ${meta.colorClass} ${
+                    hasCards
+                      ? 'shadow-md -translate-y-0.5 brightness-110 opacity-100 ring-2 ring-amber-400/50'
+                      : 'opacity-65 brightness-90'
+                  }`}
+                  title={`${meta.name}: ${count} en mano`}
+                >
+                  <div className="flex items-center justify-center gap-0.5 w-full leading-none">
+                    <Icon size={12} className={meta.textClass} />
+                    <span className="text-[9px] font-bold truncate">{meta.name}</span>
+                  </div>
+
+                  <div className="my-auto opacity-20 pointer-events-none">
+                    <Icon size={18} className={meta.textClass} />
+                  </div>
+
+                  <div className="w-full flex justify-center">
+                    <span className={`text-xs font-mono font-black px-1.5 py-0.2 rounded border leading-none ${
+                      hasCards
+                        ? 'bg-amber-400 text-zinc-950 border-amber-300 shadow font-extrabold'
+                        : 'bg-black/60 text-zinc-300 border-zinc-700'
+                    }`}>
+                      {count}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Acciones y Construcción */}
+          <div className="pt-2 border-t border-zinc-800 space-y-2">
+            {/* Mensajes de Turno / Botones Principales */}
+            {isSetup && (
+              isMyTurn ? (
+                <div className="flex items-center gap-2 bg-amber-500/20 border border-amber-400 p-2 rounded-xl text-xs text-amber-200 font-semibold">
+                  <MapPin size={18} className="text-amber-400 shrink-0 animate-bounce" />
+                  <div className="leading-tight">
+                    <span className="font-black text-amber-300 block">¡TU TURNO DE FUNDAR!</span>
+                    <span className="text-[10px]">
+                      {gameState.subphase === 'settlement' ? 'Elige un círculo dorado para tu Poblado' : 'Elige un camino dorado para tu Carretera'}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 bg-zinc-900/80 border border-zinc-800 p-2 rounded-xl text-xs text-zinc-300">
+                  <span className="animate-spin text-amber-400">⏳</span>
+                  <span className="text-[11px]">Esperando a {activePlayer?.username}...</span>
+                </div>
+              )
+            )}
+
+            {isRollPhase && (
+              <button
+                onClick={handleRoll}
+                className="btn-primary w-full py-2.5 text-xs font-black shadow-lg animate-pulse flex items-center justify-center gap-2 rounded-xl"
+              >
+                <Dices size={16} />
+                <span>🎲 TIRAR DADOS (2d6)</span>
+              </button>
+            )}
+
+            {!isMyTurn && !isSetup && (
+              <div className="flex items-center gap-2 text-xs text-zinc-400 py-1.5 px-2.5 rounded-xl bg-zinc-900/60 border border-zinc-800">
+                <span className="animate-spin text-amber-400">⏳</span>
+                <span className="text-[11px] truncate">Turno de <strong>{activePlayer?.username}</strong></span>
+              </div>
+            )}
+
+            {/* Grid 2x2 de Construcción */}
+            {!isSetup && (
+              <div className="grid grid-cols-2 gap-1.5">
+                {/* Carretera */}
+                {(() => {
+                  const affordable = canAfford(COSTS.road);
+                  const isSelected = buildMode === 'road';
+                  const active = isTradeAndBuild || isSpecialBuild;
+                  return (
+                    <button
+                      onClick={() => active && setBuildMode(isSelected ? null : 'road')}
+                      disabled={!active || (!affordable && !isSelected)}
+                      className={`btn-action flex-col items-center py-1.5 px-2 text-center rounded-xl transition ${
+                        isSelected
+                          ? 'bg-amber-500 text-zinc-950 border-amber-400 ring-2 ring-amber-400 font-bold'
+                          : active && affordable
+                          ? 'border-emerald-500/70 hover:border-emerald-400 bg-emerald-950/40 text-emerald-100'
+                          : 'opacity-40'
+                      }`}
+                    >
+                      <div className="flex items-center gap-1 font-bold text-[11px]">
+                        <GitCommitHorizontal size={12} /> Carretera
+                      </div>
+                      <div className="flex items-center gap-1 text-[9px] text-zinc-400 font-mono mt-0.5">
+                        <span>🌲1</span>
+                        <span>🧱1</span>
+                      </div>
+                    </button>
+                  );
+                })()}
+
+                {/* Poblado */}
+                {(() => {
+                  const affordable = canAfford(COSTS.settlement);
+                  const isSelected = buildMode === 'settlement';
+                  const active = isTradeAndBuild || isSpecialBuild;
+                  return (
+                    <button
+                      onClick={() => active && setBuildMode(isSelected ? null : 'settlement')}
+                      disabled={!active || (!affordable && !isSelected)}
+                      className={`btn-action flex-col items-center py-1.5 px-2 text-center rounded-xl transition ${
+                        isSelected
+                          ? 'bg-amber-500 text-zinc-950 border-amber-400 ring-2 ring-amber-400 font-bold'
+                          : active && affordable
+                          ? 'border-emerald-500/70 hover:border-emerald-400 bg-emerald-950/40 text-emerald-100'
+                          : 'opacity-40'
+                      }`}
+                    >
+                      <div className="flex items-center gap-1 font-bold text-[11px]">
+                        <Home size={12} /> Poblado <span className="text-amber-400 text-[9px]">+1PV</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-[9px] text-zinc-400 font-mono mt-0.5">
+                        <span>🌲🧱🐑🌾</span>
+                      </div>
+                    </button>
+                  );
+                })()}
+
+                {/* Ciudad */}
+                {(() => {
+                  const affordable = canAfford(COSTS.city);
+                  const isSelected = buildMode === 'city';
+                  const active = isTradeAndBuild || isSpecialBuild;
+                  return (
+                    <button
+                      onClick={() => active && setBuildMode(isSelected ? null : 'city')}
+                      disabled={!active || (!affordable && !isSelected)}
+                      className={`btn-action flex-col items-center py-1.5 px-2 text-center rounded-xl transition ${
+                        isSelected
+                          ? 'bg-amber-500 text-zinc-950 border-amber-400 ring-2 ring-amber-400 font-bold'
+                          : active && affordable
+                          ? 'border-emerald-500/70 hover:border-emerald-400 bg-emerald-950/40 text-emerald-100'
+                          : 'opacity-40'
+                      }`}
+                    >
+                      <div className="flex items-center gap-1 font-bold text-[11px]">
+                        <Castle size={12} /> Ciudad <span className="text-amber-400 text-[9px]">+1PV</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-[9px] text-amber-200 font-mono font-bold mt-0.5">
+                        <span>🌾2 ⛰️3</span>
+                      </div>
+                    </button>
+                  );
+                })()}
+
+                {/* Desarrollo */}
+                {(() => {
+                  const affordable = canAfford(COSTS.devCard);
+                  const available = gameState.devCardsRemaining > 0;
+                  const active = isTradeAndBuild;
+                  return (
+                    <button
+                      onClick={() => active && onBuyDevCard()}
+                      disabled={!active || !affordable || !available}
+                      className={`btn-action flex-col items-center py-1.5 px-2 text-center rounded-xl transition ${
+                        active && affordable && available
+                          ? 'border-purple-500/70 hover:border-purple-400 bg-purple-950/40 text-purple-100'
+                          : 'opacity-40'
+                      }`}
+                    >
+                      <div className="flex items-center gap-1 font-bold text-[11px] text-purple-300">
+                        <Sparkles size={12} /> Desarrollo
+                      </div>
+                      <div className="flex items-center gap-1 text-[9px] text-purple-200 font-mono mt-0.5">
+                        <span>🐑1 🌾1 ⛰️1</span>
+                      </div>
+                    </button>
+                  );
+                })()}
+              </div>
+            )}
+
+            {/* Fila de Utilidades: Comercio, Mano y Terminar Turno */}
+            {(!isSetup && (!isRollPhase || !isMyTurn)) && (
+              <div className="flex items-center gap-1.5 pt-1">
+                {!isSpecialBuild && (
+                  <button
+                    onClick={onOpenTradeModal}
+                    className="btn-action flex-1 py-1.5 px-2 text-amber-300 border-amber-500/40 hover:border-amber-400 bg-amber-950/30 rounded-xl text-xs font-bold justify-center"
+                    title="Comerciar con el Banco o Colonos"
+                  >
+                    <Handshake size={14} />
+                    <span>Comercio</span>
+                  </button>
+                )}
+
+                <button
+                  onClick={onOpenDevCardModal}
+                  className="btn-action flex-1 py-1.5 px-2 text-indigo-300 border-indigo-500/30 hover:border-indigo-400 bg-indigo-950/30 rounded-xl text-xs font-bold justify-center"
+                  title="Ver cartas de desarrollo en mano"
+                >
+                  📜 <span>Mano</span> ({myPrivateState?.devCards?.length || 0})
+                </button>
+
+                {isMyTurn && !isSpecialBuild && (
+                  <button
+                    onClick={onEndTurn}
+                    disabled={!isTradeAndBuild}
+                    className={`btn-action flex-1 py-1.5 px-2 rounded-xl font-black justify-center shadow ${
+                      isTradeAndBuild
+                        ? 'bg-gradient-to-r from-red-950 via-red-900 to-red-950 text-red-100 border-red-500/70 hover:from-red-900'
+                        : 'opacity-35'
+                    }`}
+                  >
+                    <span>Pasar</span>
+                    <ArrowRight size={13} />
+                  </button>
+                )}
+
+                {isSpecialBuild && (
+                  <button
+                    onClick={onSkipSpecialBuild}
+                    className="btn-action bg-zinc-800 hover:bg-zinc-700 text-zinc-300 py-1.5 px-3 rounded-xl ml-auto font-bold text-xs"
+                  >
+                    Omitir
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-7xl mx-auto flex flex-col gap-1.5 shrink-0 z-20 select-none">
