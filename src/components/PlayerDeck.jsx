@@ -42,8 +42,10 @@ export default function PlayerDeck({
   const isMyTurn = gameState.activePlayerId === currentUser?.id;
   const isSetup = gameState.phase === 'setup_round_1' || gameState.phase === 'setup_round_2';
   const isSpecialBuild = gameState.phase === 'special_building';
+  const isSpecialBuildTurn = isSpecialBuild && isMyTurn;
   const isTradeAndBuild = isMyTurn && gameState.subphase === 'trade_and_build';
   const isRollPhase = isMyTurn && gameState.subphase === 'roll' && !isSetup;
+  const canBuildNow = isTradeAndBuild || isSpecialBuildTurn;
 
   const resources = myPrivateState?.resources || { wood: 0, brick: 0, sheep: 0, wheat: 0, ore: 0 };
   const totalCards = Object.values(resources).reduce((a, b) => a + b, 0);
@@ -180,11 +182,28 @@ export default function PlayerDeck({
               </button>
             )}
 
-            {!isMyTurn && !isSetup && (
+            {!isMyTurn && !isSetup && !isSpecialBuild && (
               <div className="flex items-center gap-2 text-xs text-zinc-400 py-1.5 px-2.5 rounded-xl bg-zinc-900/60 border border-zinc-800">
                 <span className="animate-spin text-amber-400">⏳</span>
                 <span className="text-[11px] truncate">Turno de <strong>{activePlayer?.username}</strong></span>
               </div>
+            )}
+
+            {isSpecialBuild && (
+              isMyTurn ? (
+                <div className="flex items-center gap-2 bg-purple-500/20 border border-purple-400 p-2 rounded-xl text-xs text-purple-200 font-semibold">
+                  <Hammer size={18} className="text-purple-400 shrink-0 animate-bounce" />
+                  <div className="leading-tight">
+                    <span className="font-black text-purple-300 block">🔨 ¡TU FASE ESPECIAL (5-6P)!</span>
+                    <span className="text-[10px]">Puedes construir o comprar cartas antes de pasar.</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 bg-zinc-900/80 border border-zinc-800 p-2 rounded-xl text-xs text-zinc-300">
+                  <span className="animate-spin text-purple-400">⏳</span>
+                  <span className="text-[11px] truncate">Fase Especial: Turno de <strong>{activePlayer?.username}</strong></span>
+                </div>
+              )
             )}
 
             {/* Grid 2x2 de Construcción */}
@@ -194,7 +213,7 @@ export default function PlayerDeck({
                 {(() => {
                   const affordable = canAfford(COSTS.road);
                   const isSelected = buildMode === 'road';
-                  const active = isTradeAndBuild || isSpecialBuild;
+                  const active = canBuildNow;
                   return (
                     <button
                       onClick={() => active && setBuildMode(isSelected ? null : 'road')}
@@ -222,7 +241,7 @@ export default function PlayerDeck({
                 {(() => {
                   const affordable = canAfford(COSTS.settlement);
                   const isSelected = buildMode === 'settlement';
-                  const active = isTradeAndBuild || isSpecialBuild;
+                  const active = canBuildNow;
                   return (
                     <button
                       onClick={() => active && setBuildMode(isSelected ? null : 'settlement')}
@@ -249,7 +268,7 @@ export default function PlayerDeck({
                 {(() => {
                   const affordable = canAfford(COSTS.city);
                   const isSelected = buildMode === 'city';
-                  const active = isTradeAndBuild || isSpecialBuild;
+                  const active = canBuildNow;
                   return (
                     <button
                       onClick={() => active && setBuildMode(isSelected ? null : 'city')}
@@ -276,7 +295,7 @@ export default function PlayerDeck({
                 {(() => {
                   const affordable = canAfford(COSTS.devCard);
                   const available = gameState.devCardsRemaining > 0;
-                  const active = isTradeAndBuild;
+                  const active = canBuildNow;
                   return (
                     <button
                       onClick={() => active && onBuyDevCard()}
@@ -336,12 +355,12 @@ export default function PlayerDeck({
                   </button>
                 )}
 
-                {isSpecialBuild && (
+                {isSpecialBuildTurn && (
                   <button
                     onClick={onSkipSpecialBuild}
-                    className="btn-action bg-zinc-800 hover:bg-zinc-700 text-zinc-300 py-1.5 px-3 rounded-xl ml-auto font-bold text-xs"
+                    className="btn-action bg-purple-900 hover:bg-purple-800 text-purple-100 py-1.5 px-3 rounded-xl ml-auto font-bold text-xs border border-purple-500/70 shadow"
                   >
-                    Omitir
+                    Omitir / Pasar
                   </button>
                 )}
               </div>
@@ -478,11 +497,32 @@ export default function PlayerDeck({
           )}
 
           {/* MENSAJE DE ESPERA CUANDO OTRO JUGADOR ESTÁ EN SU TURNO NORMAL */}
-          {!isMyTurn && !isSetup && (
+          {!isMyTurn && !isSetup && !isSpecialBuild && (
             <div className="flex items-center gap-2 text-xs text-zinc-300 py-2 px-3.5 rounded-xl bg-zinc-900/70 border border-zinc-800">
               <span className="animate-spin text-amber-400">⏳</span>
               <span>Turno de <strong>{activePlayer?.username}</strong> ({gameState.subphase === 'roll' ? 'Tirando dados...' : 'Construyendo / Comerciando...'})</span>
             </div>
+          )}
+
+          {isSpecialBuild && (
+            isMyTurn ? (
+              <div className="flex items-center gap-2.5 bg-gradient-to-r from-purple-950/70 via-purple-900/80 to-purple-950/70 border-2 border-purple-400 py-2 px-4 rounded-2xl shadow-lg">
+                <Hammer size={20} className="text-purple-300 shrink-0 animate-bounce" />
+                <div>
+                  <div className="text-xs font-black text-purple-200 font-cinzel tracking-wider">
+                    🔨 ¡TU TURNO EN FASE ESPECIAL (5-6P)!
+                  </div>
+                  <div className="text-[11px] text-purple-100 font-medium">
+                    Puedes construir carreteras, poblados, ciudades o comprar cartas antes de pasar.
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 text-xs text-zinc-300 py-2 px-3.5 rounded-xl bg-zinc-900/70 border border-zinc-800">
+                <span className="animate-spin text-purple-400">⏳</span>
+                <span>Fase Especial (5-6P): Turno de <strong>{activePlayer?.username}</strong>...</span>
+              </div>
+            )
           )}
 
           {/* PANEL DE CONSTRUCCIÓN: Carretera, Poblado, Ciudad, Carta Desarrollo */}
@@ -493,7 +533,7 @@ export default function PlayerDeck({
                 const affordable = canAfford(COSTS.road);
                 const isSelected = buildMode === 'road';
                 const missing = getMissingText(COSTS.road);
-                const active = isTradeAndBuild || isSpecialBuild;
+                const active = canBuildNow;
 
                 return (
                   <button
@@ -524,7 +564,7 @@ export default function PlayerDeck({
                 const affordable = canAfford(COSTS.settlement);
                 const isSelected = buildMode === 'settlement';
                 const missing = getMissingText(COSTS.settlement);
-                const active = isTradeAndBuild || isSpecialBuild;
+                const active = canBuildNow;
 
                 return (
                   <button
@@ -557,7 +597,7 @@ export default function PlayerDeck({
                 const affordable = canAfford(COSTS.city);
                 const isSelected = buildMode === 'city';
                 const missing = getMissingText(COSTS.city);
-                const active = isTradeAndBuild || isSpecialBuild;
+                const active = canBuildNow;
 
                 return (
                   <button
@@ -588,7 +628,7 @@ export default function PlayerDeck({
                 const affordable = canAfford(COSTS.devCard);
                 const available = gameState.devCardsRemaining > 0;
                 const missing = getMissingText(COSTS.devCard);
-                const active = isTradeAndBuild;
+                const active = canBuildNow;
 
                 return (
                   <button
@@ -651,12 +691,12 @@ export default function PlayerDeck({
               )}
 
               {/* Omitir Fase Especial */}
-              {isSpecialBuild && (
+              {isSpecialBuildTurn && (
                 <button
                   onClick={onSkipSpecialBuild}
-                  className="btn-action bg-zinc-800 hover:bg-zinc-700 text-zinc-300 py-2 px-3 rounded-xl ml-auto font-bold"
+                  className="btn-action bg-purple-900 hover:bg-purple-800 text-purple-100 py-2 px-3.5 rounded-xl ml-auto font-bold border border-purple-500/70 shadow"
                 >
-                  Omitir
+                  Omitir / Pasar
                 </button>
               )}
             </>

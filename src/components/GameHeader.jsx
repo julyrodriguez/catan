@@ -54,7 +54,10 @@ export default function GameHeader({ gameState, currentUser, onLeaveRoom }) {
   };
 
   const handleCopyCode = () => {
-    navigator.clipboard.writeText(gameState.roomCode);
+    const origin = window.location.origin;
+    const path = window.location.pathname;
+    const url = `${origin}${path}?room=${gameState.roomCode}`;
+    navigator.clipboard.writeText(url);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };

@@ -129,12 +129,17 @@ function initCatanWebSocket(server) {
             }
           }
 
-          if (!playerUser || !playerUser.username) {
-            playerUser = {
-              id: `guest_${Math.random().toString(36).substring(2, 7)}`,
-              username: `Invitado_${Math.floor(Math.random() * 1000)}`,
-              avatar: '🎲'
-            };
+          if (!playerUser) {
+            playerUser = {};
+          }
+          if (!playerUser.id) {
+            playerUser.id = `guest_${Math.random().toString(36).substring(2, 8)}`;
+          }
+          if (!playerUser.username) {
+            playerUser.username = `Colono_${Math.floor(Math.random() * 900 + 100)}`;
+          }
+          if (!playerUser.avatar) {
+            playerUser.avatar = '🧑‍🌾';
           }
 
           const { game, player } = catanService.joinRoom(roomCode, playerUser);
@@ -151,7 +156,10 @@ function initCatanWebSocket(server) {
             payload: {
               roomCode: game.roomCode,
               playerId: player.id,
-              username: player.username
+              username: player.username,
+              avatar: player.avatar,
+              color: player.color,
+              isHost: player.isHost
             }
           }));
 
@@ -392,7 +400,84 @@ function initCatanWebSocket(server) {
     });
   }, 30000);
 
-  wss.on('close', () => clearInterval(pingInterval));
+  // Vigilante de límite de tiempo de turnos (para evitar que se cuelgue la partida si alguien se va)
+  const turnTimerInterval = setInterval(() => {
+    for (const game of catanService.rooms.values()) {
+      if (game.state !== 'playing' || !game.turnDeadline) continue;
+      if (Date.now() <= game.turnDeadline) continue;
+
+      const cur = game.getCurrentPlayer();
+      if (!cur) continue;
+
+      try {
+        if (game.phase === 'setup_round_1' || game.phase === 'setup_round_2') {
+          if (game.subphase === 'settlement') {
+            for (const [vId, v] of Object.entries(game.board.vertices)) {
+              if (!v.building && !v.adjacentVertices.some(adj => game.board.vertices[adj]?.building)) {
+                game.buildInitialSettlement(cur.id, vId);
+                game.log(`⏱️ Tiempo agotado: Se fundó automáticamente el poblado de ${cur.username}.`, 'warning');
+                break;
+              }
+            }
+          } else if (game.subphase === 'road') {
+            const v = game.board.vertices[game.lastBuiltSettlementVertexId];
+            if (v) {
+              const edge = v.adjacentEdges.find(eId => !game.board.edges[eId]?.road);
+              if (edge) {
+                game.buildInitialRoad(cur.id, edge);
+                game.log(`⏱️ Tiempo agotado: Se colocó automáticamente la carretera de ${cur.username}.`, 'warning');
+              }
+            }
+          }
+        } else if (game.phase === 'special_building') {
+          game.skipSpecialBuilding(cur.id);
+          game.log(`⏱️ Tiempo agotado: Se omitió la fase especial de ${cur.username}.`, 'warning');
+        } else if (game.subphase === 'roll') {
+          game.rollDice(cur.id);
+          game.log(`⏱️ Tiempo agotado: Se tiraron los dados automáticamente para ${cur.username}.`, 'warning');
+        } else if (game.subphase === 'trade_and_build') {
+          game.endTurn(cur.id);
+          game.log(`⏱️ Tiempo agotado: Turno finalizado automáticamente para ${cur.username}.`, 'warning');
+        } else if (game.subphase === 'discard') {
+          for (const [pId, needed] of Object.entries(game.pendingDiscards)) {
+            const p = game.players.find(x => x.id === pId);
+            if (p) {
+              const discard = { wood: 0, brick: 0, sheep: 0, wheat: 0, ore: 0 };
+              let count = 0;
+              for (const res of ['wood', 'brick', 'sheep', 'wheat', 'ore']) {
+                while ((p.resources[res] || 0) > (discard[res] || 0) && count < needed) {
+                  discard[res] = (discard[res] || 0) + 1;
+                  count++;
+                }
+              }
+              game.discardCards(p.id, discard);
+              game.log(`⏱️ Tiempo agotado: ${p.username} descartó cartas automáticamente.`, 'warning');
+            }
+          }
+        } else if (game.subphase === 'robber') {
+          const targetHex = game.board.hexes.find(h => !h.hasRobber && h.resource !== 'desert') || game.board.hexes[0];
+          game.moveRobber(cur.id, targetHex.id);
+          game.log(`⏱️ Tiempo agotado: Se reubicó al ladrón automáticamente.`, 'warning');
+        } else if (game.subphase === 'steal') {
+          if (game.robberVictims.length > 0) {
+            game.stealResource(cur.id, game.robberVictims[0]);
+          } else {
+            game.subphase = 'trade_and_build';
+          }
+        }
+
+        syncRoom(game);
+        checkAndRunBot(game);
+      } catch (err) {
+        console.error('Error en vigilancia de tiempo de turno:', err);
+      }
+    }
+  }, 2500);
+
+  wss.on('close', () => {
+    clearInterval(pingInterval);
+    clearInterval(turnTimerInterval);
+  });
 
   console.log('🎲 [CatanSocket] WebSocket de Catan montado en /api/catan/ws');
   return wss;

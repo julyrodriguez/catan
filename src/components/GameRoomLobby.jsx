@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { socketClient } from '../utils/api';
 import { 
   Users, Bot, Play, CheckCircle, Clock, Shield, 
-  Crown, ArrowLeft, Send, MessageSquare 
+  Crown, ArrowLeft, Send, MessageSquare, Copy, Check 
 } from 'lucide-react';
 
 const COLORS = [
@@ -18,6 +18,7 @@ const COLORS = [
 export default function GameRoomLobby({ gameState, currentUser, onLeaveRoom }) {
   const [chatInput, setChatInput] = useState('');
   const [chatMessages, setChatMessages] = useState([]);
+  const [copiedLink, setCopiedLink] = useState(false);
 
   React.useEffect(() => {
     const unsub = socketClient.on('chat_message', (msg) => {
@@ -29,6 +30,15 @@ export default function GameRoomLobby({ gameState, currentUser, onLeaveRoom }) {
   const isHost = gameState.players.find(p => p.id === currentUser?.id)?.isHost;
   const myPlayer = gameState.players.find(p => p.id === currentUser?.id);
   const canStart = isHost && gameState.players.length >= 2;
+
+  const handleCopyLink = () => {
+    const origin = window.location.origin;
+    const path = window.location.pathname;
+    const url = `${origin}${path}?room=${gameState.roomCode}`;
+    navigator.clipboard.writeText(url);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
+  };
 
   const handleSendChat = (e) => {
     e.preventDefault();
@@ -68,15 +78,23 @@ export default function GameRoomLobby({ gameState, currentUser, onLeaveRoom }) {
           <h2 className="text-xl sm:text-2xl font-bold font-cinzel text-amber-400">
             {gameState.title}
           </h2>
-          <div className="flex items-center justify-center gap-3 text-xs text-slate-400 mt-0.5">
-            <span>
-              Código de Sala:{' '}
+          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-xs text-slate-400 mt-1">
+            <div className="flex items-center gap-1.5 bg-slate-900/80 px-2.5 py-1 rounded-lg border border-slate-700 shadow-inner">
+              <span className="text-slate-400">Código:</span>
               <strong className="text-amber-300 font-mono text-sm tracking-wider">
                 {gameState.roomCode}
               </strong>
-            </span>
+              <button
+                onClick={handleCopyLink}
+                className="text-xs text-amber-400 hover:text-amber-300 ml-1.5 flex items-center gap-1 font-bold transition"
+                title="Copiar enlace directo de invitación"
+              >
+                {copiedLink ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
+                <span>{copiedLink ? '¡Copiado!' : 'Copiar Enlace'}</span>
+              </button>
+            </div>
             <span>•</span>
-            <span className="capitalize">
+            <span className="capitalize font-medium text-slate-300">
               {gameState.mapType === 'extended' ? 'Extensión (Hasta 6P)' : 'Estándar (Hasta 4P)'}
             </span>
             <span>•</span>
@@ -95,20 +113,37 @@ export default function GameRoomLobby({ gameState, currentUser, onLeaveRoom }) {
         {/* Players List (2 cols) */}
         <div className="lg:col-span-2 space-y-4">
           <div className="glass-panel p-5">
-            <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-800">
+            <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-800 flex-wrap gap-2">
               <h3 className="font-bold text-white font-cinzel flex items-center gap-2">
                 <Users size={18} className="text-amber-400" /> Colonos en la Sala
               </h3>
 
-              {isHost && gameState.players.length < gameState.maxPlayers && (
+              <div className="flex items-center gap-2">
                 <button
-                  onClick={handleAddBot}
-                  className="btn-action bg-slate-800 hover:bg-slate-700 text-amber-300 border-amber-500/30 text-xs py-1 px-3"
+                  onClick={handleCopyLink}
+                  className="btn-action bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border-amber-500/30 text-xs py-1 px-3 flex items-center gap-1.5"
+                  title="Copiar enlace para compartir por WhatsApp o Discord"
                 >
-                  <Bot size={15} /> + Agregar Bot IA
+                  {copiedLink ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
+                  <span>{copiedLink ? '¡Enlace Copiado!' : 'Invitar Amigos'}</span>
                 </button>
-              )}
+
+                {isHost && gameState.players.length < gameState.maxPlayers && (
+                  <button
+                    onClick={handleAddBot}
+                    className="btn-action bg-slate-800 hover:bg-slate-700 text-amber-300 border-amber-500/30 text-xs py-1 px-3"
+                  >
+                    <Bot size={15} /> + Agregar Bot IA
+                  </button>
+                )}
+              </div>
             </div>
+
+            {isHost && gameState.mapType === 'classic' && (
+              <div className="mb-4 p-2.5 bg-amber-500/10 border border-amber-500/25 rounded-xl text-xs text-amber-300/90 flex items-center justify-between">
+                <span>💡 Para jugar de <strong>5 a 6 personas</strong> en tablero ampliado de 30 hexágonos, crea la sala eligiendo <strong>Extensión Oficial (6P)</strong>.</span>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {gameState.players.map((p, index) => {

@@ -17,7 +17,21 @@ import VictoryModal from './components/VictoryModal';
 import DiceRollOverlay from './components/DiceRollOverlay';
 
 export default function App() {
-  const [currentUser, setCurrentUser] = useState(() => authStorage.getUser());
+  const getOrInitUser = () => {
+    let u = authStorage.getUser();
+    if (!u) {
+      u = {
+        id: `guest_${Math.random().toString(36).substring(2, 8)}`,
+        username: `Colono_${Math.floor(Math.random() * 900 + 100)}`,
+        avatar: ['🧑‍🌾', '🦁', '🦅', '🐺', '🦊', '🐉', '⚔️', '👑'][Math.floor(Math.random() * 8)],
+        isGuest: true
+      };
+      authStorage.setUser(u);
+    }
+    return u;
+  };
+
+  const [currentUser, setCurrentUser] = useState(() => getOrInitUser());
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [currentRoomCode, setCurrentRoomCode] = useState(null);
 
@@ -46,6 +60,13 @@ export default function App() {
           authStorage.clearToken();
         });
     }
+
+    // Auto-unirse si viene enlace de invitación (?room=CODE o ?join=CODE)
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('room') || params.get('join') || params.get('code');
+    if (code) {
+      handleJoinRoom(code.trim().toUpperCase());
+    }
   }, []);
 
   // Suscripción al WebSocket de Catán
@@ -57,6 +78,20 @@ export default function App() {
       }
     });
 
+    const unsubJoined = socketClient.on('joined_success', (payload) => {
+      setCurrentUser(prev => {
+        const updated = {
+          ...(prev || {}),
+          id: payload.playerId,
+          username: payload.username || prev?.username || `Colono_${payload.playerId.slice(-4)}`,
+          avatar: payload.avatar || prev?.avatar || '🧑‍🌾',
+          color: payload.color || prev?.color
+        };
+        authStorage.setUser(updated);
+        return updated;
+      });
+    });
+
     const unsubError = socketClient.on('action_error', (err) => {
       setActionError(err);
       setTimeout(() => setActionError(null), 4000);
@@ -64,15 +99,18 @@ export default function App() {
 
     return () => {
       unsubUpdate();
+      unsubJoined();
       unsubError();
     };
   }, []);
 
   // Unirse a una sala
   const handleJoinRoom = (roomCode) => {
+    const userToUse = currentUser || getOrInitUser();
+    setCurrentUser(userToUse);
     setCurrentRoomCode(roomCode);
     socketClient.connect(() => {
-      socketClient.joinRoom(roomCode, currentUser);
+      socketClient.joinRoom(roomCode, userToUse);
     });
   };
 

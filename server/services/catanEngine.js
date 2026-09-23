@@ -117,13 +117,15 @@ function generateBoardGraph(mapType = 'classic') {
         resource,
         number: token,
         dots: token ? PROB_DOTS[token] : 0,
-        hasRobber: resource === 'desert'
+        hasRobber: false
       });
     }
   }
 
-  // Si hay más de un desierto, el ladrón empieza en el primero
-  let robberHexId = hexList.find(h => h.hasRobber)?.id || hexList[0].id;
+  // Exactamente 1 ladrón en el juego: empieza en el primer desierto
+  const firstDesert = hexList.find(h => h.resource === 'desert') || hexList[0];
+  firstDesert.hasRobber = true;
+  let robberHexId = firstDesert.id;
 
   const verticesMap = new Map();
   const edgesMap = new Map();
@@ -273,7 +275,7 @@ class CatanGameInstance {
   constructor({ id, roomCode, title, hostPlayer, mapType = 'classic', targetPoints = 10, turnTimeLimit = 60 }) {
     this.id = id || Math.random().toString(36).substring(2, 9);
     this.roomCode = roomCode || this.id.toUpperCase();
-    this.title = title || `Partida de ${hostPlayer.username}`;
+    this.title = title || (hostPlayer?.username ? `Partida de ${hostPlayer.username}` : 'Partida de Catán');
     this.mapType = mapType; // 'classic' (max 4) | 'extended' (max 6)
     this.maxPlayers = mapType === 'extended' ? 6 : 4;
     this.targetPoints = targetPoints;
@@ -302,6 +304,7 @@ class CatanGameInstance {
 
     // Fase especial de construcción (para 5-6 jugadores)
     this.specialBuildPlayerIndex = -1;
+    this.specialBuildPlayerId = null;
     this.specialBuildQueue = [];
 
     // Estado del Gran Camino y Mayor Ejército
@@ -402,6 +405,9 @@ class CatanGameInstance {
   }
 
   getCurrentPlayer() {
+    if (this.phase === 'special_building' && this.specialBuildPlayerId) {
+      return this.players.find(p => p.id === this.specialBuildPlayerId) || this.players[this.currentTurnIndex];
+    }
     return this.players[this.currentTurnIndex];
   }
 
@@ -709,11 +715,11 @@ class CatanGameInstance {
   }
 
   buildRoad(playerId, edgeId, isFree = false) {
-    if (this.phase !== 'main') throw new Error('No es momento de construir caminos.');
+    if (this.phase !== 'main' && this.phase !== 'special_building') throw new Error('No es momento de construir caminos.');
     const player = this.players.find(p => p.id === playerId);
     const isCurrent = this.getCurrentPlayer().id === playerId;
 
-    if (!isCurrent && this.phase !== 'special_building') {
+    if (!isCurrent) {
       throw new Error('No es tu turno.');
     }
 
@@ -758,11 +764,11 @@ class CatanGameInstance {
   }
 
   buildSettlement(playerId, vertexId) {
-    if (this.phase !== 'main') throw new Error('No es momento de construir.');
+    if (this.phase !== 'main' && this.phase !== 'special_building') throw new Error('No es momento de construir.');
     const player = this.players.find(p => p.id === playerId);
     const isCurrent = this.getCurrentPlayer().id === playerId;
 
-    if (!isCurrent && this.phase !== 'special_building') {
+    if (!isCurrent) {
       throw new Error('No es tu turno.');
     }
 
@@ -801,11 +807,11 @@ class CatanGameInstance {
   }
 
   buildCity(playerId, vertexId) {
-    if (this.phase !== 'main') throw new Error('No es momento de construir.');
+    if (this.phase !== 'main' && this.phase !== 'special_building') throw new Error('No es momento de construir.');
     const player = this.players.find(p => p.id === playerId);
     const isCurrent = this.getCurrentPlayer().id === playerId;
 
-    if (!isCurrent && this.phase !== 'special_building') {
+    if (!isCurrent) {
       throw new Error('No es tu turno.');
     }
 
@@ -833,11 +839,11 @@ class CatanGameInstance {
   }
 
   buyDevCard(playerId) {
-    if (this.phase !== 'main') throw new Error('No es momento de comprar cartas de desarrollo.');
+    if (this.phase !== 'main' && this.phase !== 'special_building') throw new Error('No es momento de comprar cartas de desarrollo.');
     const player = this.players.find(p => p.id === playerId);
     const isCurrent = this.getCurrentPlayer().id === playerId;
 
-    if (!isCurrent && this.phase !== 'special_building') {
+    if (!isCurrent) {
       throw new Error('No es tu turno.');
     }
 
@@ -1160,6 +1166,7 @@ class CatanGameInstance {
     // Regla de extensión para 5-6 jugadores: Fase especial de construcción
     if (this.mapType === 'extended' && this.players.length > 4) {
       this.phase = 'special_building';
+      this.subphase = 'trade_and_build';
       this.specialBuildQueue = [];
       for (let i = 1; i < this.players.length; i++) {
         const nextIdx = (this.currentTurnIndex + i) % this.players.length;
@@ -1174,21 +1181,27 @@ class CatanGameInstance {
 
   advanceSpecialBuilding() {
     if (this.specialBuildQueue.length === 0) {
+      this.specialBuildPlayerId = null;
       this.phase = 'main';
       this.passToNextPlayer();
       return;
     }
-    const nextPlayerId = this.specialBuildQueue.shift();
-    const player = this.players.find(p => p.id === nextPlayerId);
-    this.log(`🔨 Fase Especial de Construcción: Turno para ${player.username} (solo construir/comprar).`);
+    this.specialBuildPlayerId = this.specialBuildQueue.shift();
+    const player = this.players.find(p => p.id === this.specialBuildPlayerId);
+    this.resetTurnTimer();
+    this.log(`🔨 Fase Especial de Construcción: Turno para ${player.username} (solo construir/comprar o pasar).`);
   }
 
   skipSpecialBuilding(playerId) {
     if (this.phase !== 'special_building') throw new Error('No estás en fase especial de construcción.');
+    if (this.specialBuildPlayerId && playerId && this.specialBuildPlayerId !== playerId) {
+      throw new Error('No es tu turno en la fase especial.');
+    }
     this.advanceSpecialBuilding();
   }
 
   passToNextPlayer() {
+    this.specialBuildPlayerId = null;
     this.currentTurnIndex = (this.currentTurnIndex + 1) % this.players.length;
     this.subphase = 'roll';
     this.turnCount += 1;
@@ -1221,6 +1234,22 @@ class CatanGameInstance {
   // --- BOT HEURISTICS ---
   runBotTurn(botPlayer) {
     if (this.state !== 'playing') return null;
+
+    // 0. Descartes del bot si sacó 7 (aplica para cualquier bot pendiente de descarte)
+    if (this.subphase === 'discard' && this.pendingDiscards[botPlayer.id]) {
+      const needed = this.pendingDiscards[botPlayer.id];
+      const discard = { wood: 0, brick: 0, sheep: 0, wheat: 0, ore: 0 };
+      let count = 0;
+      for (const res of RESOURCE_TYPES) {
+        while (botPlayer.resources[res] > (discard[res] || 0) && count < needed) {
+          discard[res] = (discard[res] || 0) + 1;
+          count++;
+        }
+      }
+      this.discardCards(botPlayer.id, discard);
+      return { action: 'discard', discard };
+    }
+
     const current = this.getCurrentPlayer();
     if (current.id !== botPlayer.id) return null;
 
@@ -1268,21 +1297,6 @@ class CatanGameInstance {
       }
     }
 
-    // 2. Descartes del bot si sacó 7
-    if (this.subphase === 'discard' && this.pendingDiscards[botPlayer.id]) {
-      const needed = this.pendingDiscards[botPlayer.id];
-      const discard = { wood: 0, brick: 0, sheep: 0, wheat: 0, ore: 0 };
-      let count = 0;
-      for (const res of RESOURCE_TYPES) {
-        while (botPlayer.resources[res] > (discard[res] || 0) && count < needed) {
-          discard[res] = (discard[res] || 0) + 1;
-          count++;
-        }
-      }
-      this.discardCards(botPlayer.id, discard);
-      return { action: 'discard', discard };
-    }
-
     // 3. Mover al ladrón
     if (this.subphase === 'robber') {
       // Buscar hex con mayor puntaje del rival líder
@@ -1308,24 +1322,28 @@ class CatanGameInstance {
     // 6. Fase principal de construcción y comercio
     if (this.phase === 'main' && this.subphase === 'trade_and_build') {
       // Intentar mejorar a ciudad
-      if (this.canAfford(botPlayer, COSTS.city)) {
+      if (this.canAfford(botPlayer, COSTS.city) && botPlayer.citiesCount < 4) {
         for (const [vId, v] of Object.entries(this.board.vertices)) {
           if (v.building?.type === 'settlement' && v.building?.playerId === botPlayer.id) {
-            this.buildCity(botPlayer.id, vId);
-            return { action: 'build_city', vertexId: vId };
+            try {
+              this.buildCity(botPlayer.id, vId);
+              return { action: 'build_city', vertexId: vId };
+            } catch (e) {}
           }
         }
       }
 
       // Intentar construir poblado
-      if (this.canAfford(botPlayer, COSTS.settlement)) {
+      if (this.canAfford(botPlayer, COSTS.settlement) && botPlayer.settlementsCount < 5) {
         for (const [vId, v] of Object.entries(this.board.vertices)) {
           if (!v.building) {
             const hasDist = !v.adjacentVertices.some(adj => this.board.vertices[adj]?.building);
             const hasRoad = v.adjacentEdges.some(eId => this.board.edges[eId]?.road?.playerId === botPlayer.id);
             if (hasDist && hasRoad) {
-              this.buildSettlement(botPlayer.id, vId);
-              return { action: 'build_settlement', vertexId: vId };
+              try {
+                this.buildSettlement(botPlayer.id, vId);
+                return { action: 'build_settlement', vertexId: vId };
+              } catch (e) {}
             }
           }
         }
@@ -1333,22 +1351,32 @@ class CatanGameInstance {
 
       // Intentar comprar carta de desarrollo
       if (this.canAfford(botPlayer, COSTS.devCard) && this.devCardDeck.length > 0) {
-        this.buyDevCard(botPlayer.id);
-        return { action: 'buy_dev_card' };
+        try {
+          this.buyDevCard(botPlayer.id);
+          return { action: 'buy_dev_card' };
+        } catch (e) {}
       }
 
       // Intentar construir camino
       if (this.canAfford(botPlayer, COSTS.road) && botPlayer.roadsCount < 15) {
         for (const [eId, edge] of Object.entries(this.board.edges)) {
           if (!edge.road) {
-            const connects = [edge.v1, edge.v2].some(vId => {
+            const connectsToOwnBuilding = (vId) => {
               const v = this.board.vertices[vId];
-              return (v.building?.playerId === botPlayer.id) ||
-                v.adjacentEdges.some(adjE => this.board.edges[adjE]?.road?.playerId === botPlayer.id);
-            });
+              return v && v.building && v.building.playerId === botPlayer.id;
+            };
+            const connectsToOwnRoad = (vId) => {
+              const v = this.board.vertices[vId];
+              if (v.building && v.building.playerId !== botPlayer.id) return false;
+              return v.adjacentEdges.some(adjE => adjE !== eId && this.board.edges[adjE]?.road?.playerId === botPlayer.id);
+            };
+            const connects = connectsToOwnBuilding(edge.v1) || connectsToOwnBuilding(edge.v2) ||
+              connectsToOwnRoad(edge.v1) || connectsToOwnRoad(edge.v2);
             if (connects) {
-              this.buildRoad(botPlayer.id, eId);
-              return { action: 'build_road', edgeId: eId };
+              try {
+                this.buildRoad(botPlayer.id, eId);
+                return { action: 'build_road', edgeId: eId };
+              } catch (e) {}
             }
           }
         }
@@ -1357,6 +1385,69 @@ class CatanGameInstance {
       // Finalizar turno
       this.endTurn(botPlayer.id);
       return { action: 'end_turn' };
+    }
+
+    // 7. Fase especial de construcción para 5-6 jugadores
+    if (this.phase === 'special_building') {
+      if (this.canAfford(botPlayer, COSTS.city) && botPlayer.citiesCount < 4) {
+        for (const [vId, v] of Object.entries(this.board.vertices)) {
+          if (v.building?.type === 'settlement' && v.building?.playerId === botPlayer.id) {
+            try {
+              this.buildCity(botPlayer.id, vId);
+              return { action: 'build_city', vertexId: vId };
+            } catch (e) {}
+          }
+        }
+      }
+
+      if (this.canAfford(botPlayer, COSTS.settlement) && botPlayer.settlementsCount < 5) {
+        for (const [vId, v] of Object.entries(this.board.vertices)) {
+          if (!v.building) {
+            const hasDist = !v.adjacentVertices.some(adj => this.board.vertices[adj]?.building);
+            const hasRoad = v.adjacentEdges.some(eId => this.board.edges[eId]?.road?.playerId === botPlayer.id);
+            if (hasDist && hasRoad) {
+              try {
+                this.buildSettlement(botPlayer.id, vId);
+                return { action: 'build_settlement', vertexId: vId };
+              } catch (e) {}
+            }
+          }
+        }
+      }
+
+      if (this.canAfford(botPlayer, COSTS.devCard) && this.devCardDeck.length > 0) {
+        try {
+          this.buyDevCard(botPlayer.id);
+          return { action: 'buy_dev_card' };
+        } catch (e) {}
+      }
+
+      if (this.canAfford(botPlayer, COSTS.road) && botPlayer.roadsCount < 15) {
+        for (const [eId, edge] of Object.entries(this.board.edges)) {
+          if (!edge.road) {
+            const connectsToOwnBuilding = (vId) => {
+              const v = this.board.vertices[vId];
+              return v && v.building && v.building.playerId === botPlayer.id;
+            };
+            const connectsToOwnRoad = (vId) => {
+              const v = this.board.vertices[vId];
+              if (v.building && v.building.playerId !== botPlayer.id) return false;
+              return v.adjacentEdges.some(adjE => adjE !== eId && this.board.edges[adjE]?.road?.playerId === botPlayer.id);
+            };
+            const connects = connectsToOwnBuilding(edge.v1) || connectsToOwnBuilding(edge.v2) ||
+              connectsToOwnRoad(edge.v1) || connectsToOwnRoad(edge.v2);
+            if (connects) {
+              try {
+                this.buildRoad(botPlayer.id, eId);
+                return { action: 'build_road', edgeId: eId };
+              } catch (e) {}
+            }
+          }
+        }
+      }
+
+      this.skipSpecialBuilding(botPlayer.id);
+      return { action: 'skip_special_build' };
     }
 
     return null;
