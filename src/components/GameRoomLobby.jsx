@@ -1,9 +1,10 @@
 // src/components/GameRoomLobby.jsx
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { socketClient } from '../utils/api';
 import { 
   Users, Bot, Play, CheckCircle, Clock, Shield, 
-  Crown, ArrowLeft, Send, MessageSquare, Copy, Check 
+  Crown, ArrowLeft, Send, MessageSquare, Copy, Check,
+  ChevronUp, ChevronDown
 } from 'lucide-react';
 
 const COLORS = [
@@ -18,14 +19,22 @@ const COLORS = [
 export default function GameRoomLobby({ gameState, currentUser, onLeaveRoom }) {
   const [chatInput, setChatInput] = useState('');
   const [chatMessages, setChatMessages] = useState([]);
+  const [showAllChat, setShowAllChat] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const lobbyChatScrollRef = useRef(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const unsub = socketClient.on('chat_message', (msg) => {
-      setChatMessages(prev => [...prev, msg].slice(-40));
+      setChatMessages(prev => [...prev, msg].slice(-50));
     });
     return unsub;
   }, []);
+
+  useEffect(() => {
+    if (lobbyChatScrollRef.current) {
+      lobbyChatScrollRef.current.scrollTop = lobbyChatScrollRef.current.scrollHeight;
+    }
+  }, [chatMessages, showAllChat]);
 
   const isHost = gameState.players.find(p => p.id === currentUser?.id)?.isHost;
   const myPlayer = gameState.players.find(p => p.id === currentUser?.id);
@@ -283,35 +292,58 @@ export default function GameRoomLobby({ gameState, currentUser, onLeaveRoom }) {
         </div>
 
         {/* In-Room Chat (1 col) */}
-        <div className="glass-panel p-4 flex flex-col h-96">
-          <h3 className="font-bold text-sm text-white font-cinzel mb-3 flex items-center gap-2 pb-2 border-b border-slate-800">
+        <div className="glass-panel p-4 flex flex-col h-96 min-h-0 overflow-hidden">
+          <h3 className="font-bold text-sm text-white font-cinzel mb-3 flex items-center gap-2 pb-2 border-b border-slate-800 shrink-0">
             <MessageSquare size={16} className="text-amber-400" /> Chat de la Sala
           </h3>
 
-          <div className="flex-1 overflow-y-auto space-y-2 p-1 text-xs">
+          <div 
+            ref={lobbyChatScrollRef} 
+            className="flex-1 min-h-0 overflow-y-auto space-y-2 p-1 text-xs select-text overscroll-contain"
+          >
             {chatMessages.length === 0 ? (
               <div className="text-center text-slate-500 py-12">
                 Saluda a tus compañeros de expedición
               </div>
             ) : (
-              chatMessages.map((m) => (
-                <div key={m.id} className="bg-slate-900/60 p-2 rounded-lg border border-slate-800">
-                  <span className="font-bold text-amber-400 mr-1.5">{m.sender}:</span>
-                  <span className="text-slate-200">{m.text}</span>
-                </div>
-              ))
+              <>
+                {chatMessages.length > 5 && !showAllChat && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAllChat(true)}
+                    className="w-full text-center py-1 text-[11px] text-amber-400/80 hover:text-amber-300 font-semibold bg-slate-900/60 hover:bg-slate-800/80 rounded-lg border border-amber-500/20 transition flex items-center justify-center gap-1 mb-1"
+                  >
+                    <ChevronUp size={13} /> Ver mensajes anteriores ({chatMessages.length - 5})
+                  </button>
+                )}
+                {showAllChat && chatMessages.length > 5 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAllChat(false)}
+                    className="w-full text-center py-1 text-[11px] text-slate-400 hover:text-slate-200 font-semibold bg-slate-900/60 hover:bg-slate-800/80 rounded-lg border border-slate-700/40 transition flex items-center justify-center gap-1 mb-1"
+                  >
+                    <ChevronDown size={13} /> Mostrar solo últimos 5
+                  </button>
+                )}
+                {(showAllChat ? chatMessages : chatMessages.slice(-5)).map((m) => (
+                  <div key={m.id} className="bg-slate-900/60 p-2 rounded-lg border border-slate-800 shadow-sm">
+                    <span className="font-bold text-amber-400 mr-1.5">{m.sender}:</span>
+                    <span className="text-slate-200">{m.text}</span>
+                  </div>
+                ))}
+              </>
             )}
           </div>
 
-          <form onSubmit={handleSendChat} className="mt-3 flex gap-2">
+          <form onSubmit={handleSendChat} className="mt-3 flex gap-2 shrink-0">
             <input
               type="text"
               value={chatInput}
               onChange={(e) => setChatInput(e.target.value)}
               placeholder="Escribe un mensaje..."
-              className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-amber-500"
+              className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-amber-500 shadow-inner"
             />
-            <button type="submit" className="btn-action bg-amber-500 text-slate-950 px-3 py-1.5">
+            <button type="submit" className="btn-action bg-amber-500 text-slate-950 px-3 py-1.5 rounded-lg">
               <Send size={14} />
             </button>
           </form>
